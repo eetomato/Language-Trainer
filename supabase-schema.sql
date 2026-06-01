@@ -132,11 +132,11 @@ on conflict (name) do nothing;
 -- SEED: Employees
 -- ================================================================
 insert into employees (name, store_name, role, email) values
-  ('FUJIMURA', 'GINZA',   'staff',   'fujimura@nhmenswear.internal'),
-  ('ONISHI',   'GINZA',   'staff',   'onishi@nhmenswear.internal'),
-  ('KIM',      'GINZA',   'staff',   'kim@nhmenswear.internal'),
-  ('SAKATA',   'GINZA',   'staff',   'sakata@nhmenswear.internal'),
-  ('MANAGER',  'GINZA',   'manager', 'manager@nhmenswear.internal')
+  ('FUJIMURA', 'GINZA',   'staff',   'fujimura@nhmenswear.app'),
+  ('ONISHI',   'GINZA',   'staff',   'onishi@nhmenswear.app'),
+  ('KIM',      'GINZA',   'staff',   'kim@nhmenswear.app'),
+  ('SAKATA',   'GINZA',   'staff',   'sakata@nhmenswear.app'),
+  ('MANAGER',  'GINZA',   'manager', 'manager@nhmenswear.app')
 on conflict (name) do nothing;
 
 -- ================================================================

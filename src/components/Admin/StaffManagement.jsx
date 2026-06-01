@@ -33,7 +33,7 @@ export default function StaffManagement() {
     const storeName = newStaff.store_name || stores[0]?.name || 'GINZA';
     if (!name) return;
 
-    const email = `${name.toLowerCase()}@nhmenswear.internal`;
+    const email = `${name.toLowerCase()}@nhmenswear.app`;
 
     const { error } = await supabase.from('employees').insert({
       name,
@@ -71,7 +71,7 @@ export default function StaffManagement() {
   // Clears auth_id + rotates email so staff can re-register on next login.
   const resetPassword = async (emp) => {
     if (!window.confirm(`${emp.name} のパスワードをリセットしますか？\n次回ログイン時に新しいパスワードを設定できます。`)) return;
-    const newEmail = `${emp.name.toLowerCase()}.r${Date.now()}@nhmenswear.internal`;
+    const newEmail = `${emp.name.toLowerCase()}.r${Date.now()}@nhmenswear.app`;
     const { error } = await supabase
       .from('employees')
       .update({ auth_id: null, email: newEmail })
