@@ -55,10 +55,10 @@ export const defaultLesson = {
 };
 
 export const seedEmployees = [
-  { name: 'TARO', storeName: 'GINZA', score: 92, studyMinutes: 270 },
-  { name: 'MARK', storeName: 'GINZA', score: 87, studyMinutes: 225 },
-  { name: 'KEN', storeName: 'GINZA', score: 78, studyMinutes: 75 },
-  { name: 'YUKI', storeName: 'GINZA', score: 75, studyMinutes: 140 },
+  { name: 'FUJIMURA', storeName: 'GINZA', score: 92, studyMinutes: 270 },
+  { name: 'KIM', storeName: 'GINZA', score: 87, studyMinutes: 225 },
+  { name: 'ONISHI', storeName: 'GINZA', score: 78, studyMinutes: 75 },
+  { name: 'SAKATA', storeName: 'GINZA', score: 75, studyMinutes: 140 },
   { name: 'AOI', storeName: 'SHIBUYA', score: 79, studyMinutes: 120 },
   { name: 'REN', storeName: 'SHINJUKU', score: 82, studyMinutes: 95 },
 ];

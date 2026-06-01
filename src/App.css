@@ -541,3 +541,103 @@ button {
     flex-direction: column;
   }
 }
+
+/* ── Loading screen ──────────────────────────────────────────── */
+.app-loading {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: var(--ink);
+  color: #fff;
+  letter-spacing: 0.1em;
+  font-size: 14px;
+}
+
+/* ── Manager hint (subtle login button) ─────────────────────── */
+.manager-hint {
+  display: block;
+  margin: 20px auto 0;
+  background: none;
+  border: none;
+  color: #bbb;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  opacity: 0.4;
+  transition: opacity 0.2s;
+}
+.manager-hint:hover { opacity: 0.9; }
+
+/* ── Staff management list ───────────────────────────────────── */
+.staff-add-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.staff-add-row input,
+.staff-add-row select {
+  flex: 1;
+  min-width: 120px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font: inherit;
+  background: #fff;
+}
+
+.staff-list { display: grid; gap: 8px; }
+
+.staff-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--line);
+  padding: 12px 16px;
+  background: #fff;
+  flex-wrap: wrap;
+}
+
+.staff-name-col  { flex: 1; font-weight: 700; min-width: 80px; }
+.staff-store-col { flex: 1; font-size: 13px; color: var(--muted); }
+
+.staff-status {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+.staff-status.active  { background: rgba(46,204,113,.15); color: #147a40; }
+.staff-status.pending { background: rgba(231,76,60,.1);   color: #a83124; }
+
+.staff-edit-input,
+.staff-edit-select {
+  flex: 1;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 8px 10px;
+  font: inherit;
+  min-width: 80px;
+}
+
+.staff-actions {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.icon-btn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, border-color 0.15s;
+}
+.icon-btn:hover         { background: var(--ink); color: #fff; border-color: var(--ink); }
+.icon-btn.danger:hover  { background: var(--warning); color: #fff; border-color: var(--warning); }

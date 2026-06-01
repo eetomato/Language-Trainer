@@ -11,22 +11,34 @@ import { useDashboard } from '../hooks/useDashboard';
 import '../App.css';
 
 export default function App() {
-  const { user, login, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
   const { lesson, saveLesson, submitAnswer, resetProgress } = useLesson(user);
   const { employeeStats, managerStats } = useDashboard(user, lesson);
   const [view, setView] = useState('dashboard');
 
+  // Wait for Supabase session check
+  if (loading) {
+    return (
+      <div className="app-loading">
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
   if (!user) {
-    return <Login onLogin={login} />;
+    return <Login />;
   }
 
   const isManager = user.role === 'manager';
+
+  // Guard: non-manager cannot access manager view
+  const safeView = view === 'manager' && !isManager ? 'dashboard' : view;
 
   return (
     <Layout user={user} onLogout={logout}>
       <nav className="view-tabs" aria-label="Main views">
         <button
-          className={view === 'dashboard' ? 'active' : ''}
+          className={safeView === 'dashboard' ? 'active' : ''}
           onClick={() => setView('dashboard')}
           type="button"
         >
@@ -34,7 +46,7 @@ export default function App() {
           Dashboard
         </button>
         <button
-          className={view === 'lesson' ? 'active' : ''}
+          className={safeView === 'lesson' ? 'active' : ''}
           onClick={() => setView('lesson')}
           type="button"
         >
@@ -43,7 +55,7 @@ export default function App() {
         </button>
         {isManager && (
           <button
-            className={view === 'manager' ? 'active' : ''}
+            className={safeView === 'manager' ? 'active' : ''}
             onClick={() => setView('manager')}
             type="button"
           >
@@ -53,7 +65,7 @@ export default function App() {
         )}
       </nav>
 
-      {view === 'dashboard' && (
+      {safeView === 'dashboard' && (
         isManager ? (
           <ManagerDashboard stats={managerStats} lesson={lesson} onSaveLesson={saveLesson} />
         ) : (
@@ -66,7 +78,7 @@ export default function App() {
         )
       )}
 
-      {view === 'lesson' && (
+      {safeView === 'lesson' && (
         <LessonPage
           user={user}
           lesson={lesson}
@@ -75,7 +87,7 @@ export default function App() {
         />
       )}
 
-      {view === 'manager' && isManager && (
+      {safeView === 'manager' && isManager && (
         <ManagerDashboard stats={managerStats} lesson={lesson} onSaveLesson={saveLesson} />
       )}
     </Layout>
