@@ -52,7 +52,15 @@ export default function EmployeeDashboard({ user, stats, onStartLesson, onReset 
         ) : (
           <p className="empty-state">No weak words yet. Complete the practice once.</p>
         )}
-        <button type="button" className="text-action" onClick={onReset}>
+        <button
+          type="button"
+          className="text-action"
+          onClick={() => {
+            if (window.confirm('Are you sure? This will delete all your progress.')) {
+              onReset();
+            }
+          }}
+        >
           <RotateCcw size={16} />
           Reset my local progress
         </button>
