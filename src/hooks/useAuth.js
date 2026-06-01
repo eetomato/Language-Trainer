@@ -26,20 +26,24 @@ export function useAuth() {
     }
 
     // Check existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session?.user) {
-        const profile = await loadProfile(session.user.id);
-        if (profile) {
-          setUser({
-            id: profile.id,
-            name: profile.name,
-            storeName: profile.store_name,
-            role: profile.role || 'staff',
-          });
+    supabase.auth.getSession()
+      .then(async ({ data: { session } }) => {
+        if (session?.user) {
+          try {
+            const profile = await loadProfile(session.user.id);
+            if (profile) {
+              setUser({
+                id: profile.id,
+                name: profile.name,
+                storeName: profile.store_name,
+                role: profile.role || 'staff',
+              });
+            }
+          } catch (_) { /* profile load failed, continue as logged out */ }
         }
-      }
-      setLoading(false);
-    });
+      })
+      .catch(() => { /* session check failed */ })
+      .finally(() => setLoading(false));
 
     // Listen for auth state changes (login / logout)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
