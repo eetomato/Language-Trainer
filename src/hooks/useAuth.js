@@ -17,12 +17,16 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Safety net: loading never freezes beyond 4 seconds
+    const safetyTimer = setTimeout(() => setLoading(false), 4000);
+
     // Dev fallback: no Supabase configured
     if (!supabase) {
       const saved = localStorage.getItem(LOCAL_KEY);
       if (saved) setUser(JSON.parse(saved));
       setLoading(false);
-      return;
+      clearTimeout(safetyTimer);
+      return () => clearTimeout(safetyTimer);
     }
 
     // Check existing session
@@ -43,7 +47,10 @@ export function useAuth() {
         }
       })
       .catch(() => { /* session check failed */ })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        clearTimeout(safetyTimer);
+        setLoading(false);
+      });
 
     // Listen for auth state changes (login / logout)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
