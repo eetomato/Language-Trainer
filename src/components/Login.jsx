@@ -43,6 +43,10 @@ export default function Login() {
       setError('この名前は登録されていません。マネージャーに連絡してください。');
     } else if (result.error === 'wrong_password') {
       setError('パスワードが違います。');
+    } else if (result.error === 'timeout') {
+      setError('接続がタイムアウトしました。もう一度お試しください。');
+    } else if (result.error === 'network_error') {
+      setError('ネットワークエラー。接続を確認してください。');
     } else if (result.error) {
       setError(result.error);
     }
