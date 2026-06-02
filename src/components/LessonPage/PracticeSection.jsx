@@ -1,98 +1,123 @@
-import { useMemo, useState } from 'react';
-import { Check, RotateCcw, Send } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { Check, Send } from 'lucide-react';
 import { normalizeAnswer } from '../../utils/dataFormatter';
 
-export default function PracticeSection({ lesson, onSubmitAnswer }) {
+export default function PracticeSection({ lesson, onSubmitAnswer, onSaveSession }) {
+  const startTime = useRef(Date.now());
   const [answers, setAnswers] = useState({});
   const [feedback, setFeedback] = useState({});
-  const matchOptions = useMemo(
-    () => ['relaxed fit', 'oversized', 'big', 'slim fit'],
-    []
-  );
+  const [completed, setCompleted] = useState(false);
 
-  const handleInput = (questionId, value) => {
-    setAnswers((current) => ({ ...current, [questionId]: value }));
-  };
+  const questions = lesson.questions || [];
+  const allAnswered = questions.length > 0 && questions.every((q) => feedback[q.id] !== undefined);
 
+  // ── Check and save one answer ──────────────────────────────────
   const checkAnswer = async (question, answer) => {
-    const expected = question.blankAnswer;
-    const isCorrect =
-      question.questionType === 'match'
-        ? answer === expected
-        : normalizeAnswer(answer) === normalizeAnswer(expected);
+    if (feedback[question.id] !== undefined) return; // already answered
 
-    setFeedback((current) => ({
-      ...current,
-      [question.id]: {
-        isCorrect,
-        message: isCorrect ? 'Correct. Ready for service.' : `Review: ${expected}`,
-      },
+    let isCorrect = false;
+    if (question.questionType === 'multiple_choice') {
+      // Check against option's correct flag OR blank_answer
+      const options = question.multipleChoice || [];
+      const chosen = options.find((o) => o.text === answer);
+      isCorrect = chosen?.correct === true;
+    } else {
+      // fill_blank / roleplay
+      isCorrect = normalizeAnswer(answer) === normalizeAnswer(question.blankAnswer);
+    }
+
+    setFeedback((prev) => ({
+      ...prev,
+      [question.id]: { isCorrect, correctAnswer: question.blankAnswer },
     }));
 
     await onSubmitAnswer({ question, userAnswer: answer, isCorrect });
   };
 
-  const renderQuestion = (question) => {
-    if (question.questionType === 'match') {
-      const pairs = question.blankAnswer.split('|');
-      const selected = answers[question.id] || {};
-      const answer = pairs.map((pair) => {
-        const [jp] = pair.split('=');
-        return `${jp}=${selected[jp] || ''}`;
-      }).join('|');
+  // ── Complete lesson ────────────────────────────────────────────
+  const handleComplete = () => {
+    const studyMinutes = Math.max(1, Math.round((Date.now() - startTime.current) / 60000));
+    setCompleted(true);
+    if (onSaveSession) onSaveSession({ lessonId: lesson.id, studyMinutes });
+  };
 
-      return (
-        <div className="matching-grid">
-          {pairs.map((pair) => {
-            const [jp] = pair.split('=');
-            return (
-              <label key={jp} className="match-row">
-                <span>{jp}</span>
-                <select
-                  value={selected[jp] || ''}
-                  onChange={(event) =>
-                    handleInput(question.id, { ...selected, [jp]: event.target.value })
-                  }
-                >
-                  <option value="">Choose</option>
-                  {matchOptions.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            );
-          })}
-          <button type="button" className="secondary-action" onClick={() => checkAnswer(question, answer)}>
-            <Check size={18} />
-            Check match
-          </button>
-        </div>
-      );
-    }
-
+  // ── Type A: fill-in-blank ──────────────────────────────────────
+  const renderFillBlank = (question) => {
+    const done = feedback[question.id] !== undefined;
     return (
       <form
         className="answer-form"
-        onSubmit={(event) => {
-          event.preventDefault();
+        onSubmit={(e) => {
+          e.preventDefault();
           checkAnswer(question, answers[question.id] || '');
         }}
       >
         <input
           type="text"
           value={answers[question.id] || ''}
-          onChange={(event) => handleInput(question.id, event.target.value)}
-          placeholder={question.questionType === 'roleplay' ? 'こちらのジャケットは...' : '大きめ'}
+          onChange={(e) => setAnswers((p) => ({ ...p, [question.id]: e.target.value }))}
+          placeholder={question.context || 'Type your answer...'}
+          disabled={done}
         />
-        <button type="submit" className="secondary-action">
-          <Send size={18} />
-          Submit
-        </button>
+        {!done && (
+          <button type="submit" className="secondary-action">
+            <Send size={16} /> Submit
+          </button>
+        )}
       </form>
     );
   };
+
+  // ── Type B: multiple choice ────────────────────────────────────
+  const renderMultipleChoice = (question) => {
+    const done = feedback[question.id] !== undefined;
+    const options = question.multipleChoice || [];
+
+    return (
+      <div className="mc-grid">
+        {options.map((option, i) => {
+          let cls = 'mc-btn';
+          if (done) {
+            if (option.correct) cls += ' mc-correct';
+            else if (answers[question.id] === option.text && !option.correct) cls += ' mc-wrong';
+          }
+          return (
+            <button
+              key={i}
+              type="button"
+              className={cls}
+              disabled={done}
+              onClick={() => {
+                setAnswers((p) => ({ ...p, [question.id]: option.text }));
+                checkAnswer(question, option.text);
+              }}
+            >
+              {option.text}
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
+
+  // ── Completed screen ───────────────────────────────────────────
+  if (completed) {
+    const correct = Object.values(feedback).filter((f) => f.isCorrect).length;
+    const total = questions.length;
+    const pct = total ? Math.round((correct / total) * 100) : 0;
+    return (
+      <section className="lesson-section complete-section">
+        <p className="eyebrow">Lesson Complete</p>
+        <div className="complete-score">
+          <strong>{pct}%</strong>
+          <p>{correct} / {total} correct</p>
+        </div>
+        <p className="complete-msg">
+          {pct >= 80 ? '素晴らしい！接客でもすぐ使えます。' : '復習してもう一度試してみてください。'}
+        </p>
+      </section>
+    );
+  }
 
   return (
     <section className="lesson-section practice-section">
@@ -100,35 +125,38 @@ export default function PracticeSection({ lesson, onSubmitAnswer }) {
         <p className="eyebrow">E. Practice</p>
         <h2>Use it now</h2>
       </div>
+
       <div className="practice-list">
-        {lesson.questions.map((question, index) => (
+        {questions.map((question, index) => (
           <article key={question.id} className="practice-card">
             <div className="question-topline">
-              <span>Type {index + 1}</span>
-              <small>{question.questionType.replace('_', ' ')}</small>
+              <span>Q{index + 1}</span>
+              <small>
+                {question.questionType === 'multiple_choice' ? 'Type B — 選択' : 'Type A — 入力'}
+              </small>
             </div>
             <h3>{question.questionText}</h3>
-            <p>{question.context}</p>
-            {renderQuestion(question)}
-            {feedback[question.id] && (
-              <div className={feedback[question.id].isCorrect ? 'feedback correct' : 'feedback wrong'}>
-                {feedback[question.id].message}
+
+            {question.questionType === 'multiple_choice'
+              ? renderMultipleChoice(question)
+              : renderFillBlank(question)}
+
+            {feedback[question.id] !== undefined && (
+              <div className={`feedback ${feedback[question.id].isCorrect ? 'correct' : 'wrong'}`}>
+                {feedback[question.id].isCorrect
+                  ? '✓ Correct. Ready for service.'
+                  : `✗ Answer: ${feedback[question.id].correctAnswer}`}
               </div>
             )}
           </article>
         ))}
       </div>
-      <button
-        type="button"
-        className="text-action"
-        onClick={() => {
-          setAnswers({});
-          setFeedback({});
-        }}
-      >
-        <RotateCcw size={16} />
-        Reset visible answers
-      </button>
+
+      {allAnswered && (
+        <button type="button" className="primary-action complete-btn" onClick={handleComplete}>
+          <Check size={18} /> Complete Lesson
+        </button>
+      )}
     </section>
   );
 }

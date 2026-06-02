@@ -14,7 +14,7 @@ import '../App.css';
 
 export default function App() {
   const { user, logout, loading } = useAuth();
-  const { submitAnswer, resetProgress } = useLesson(user);
+  const { submitAnswer, saveSession, resetProgress } = useLesson(user);
   const { lessons, loading: lessonsLoading } = useLessons();
   const { employeeStats, managerStats } = useDashboard(user);
   const [view, setView] = useState('dashboard');
@@ -104,6 +104,7 @@ export default function App() {
           user={user}
           lesson={selectedLesson}
           onSubmitAnswer={submitAnswer}
+          onSaveSession={saveSession}
           stats={employeeStats}
           onBack={handleBackToList}
         />

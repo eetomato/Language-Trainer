@@ -18,6 +18,7 @@ function mapLesson(row) {
       questionType: q.question_type,
       questionText: q.question_text,
       blankAnswer: q.blank_answer,
+      multipleChoice: q.multiple_choice || null,
       context: q.context,
     })),
   };

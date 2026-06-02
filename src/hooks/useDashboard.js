@@ -3,19 +3,20 @@ import { calculateEmployeeStats, calculateManagerStats } from '../utils/analytic
 import { supabase } from '../utils/supabaseClient';
 
 const RESULTS_KEY = 'nh_menswear_results';
+const SESSIONS_KEY = 'nh_menswear_sessions';
 
 export function useDashboard(user) {
-  // Employee stats — from localStorage (fast, offline-capable)
   const [localResults, setLocalResults] = useState([]);
-
-  // Manager stats — from Supabase
+  const [localSessions, setLocalSessions] = useState([]);
   const [managerData, setManagerData] = useState({ employees: [], mistakes: [], stores: [] });
 
-  // ── Load localStorage results (for employee stats) ────────────
+  // ── Employee data from localStorage ───────────────────────────
   useEffect(() => {
     const load = () => {
-      const saved = localStorage.getItem(RESULTS_KEY);
-      setLocalResults(saved ? JSON.parse(saved) : []);
+      const results = localStorage.getItem(RESULTS_KEY);
+      const sessions = localStorage.getItem(SESSIONS_KEY);
+      setLocalResults(results ? JSON.parse(results) : []);
+      setLocalSessions(sessions ? JSON.parse(sessions) : []);
     };
     load();
     window.addEventListener('storage', load);
@@ -26,41 +27,37 @@ export function useDashboard(user) {
     };
   }, []);
 
-  // ── Load Supabase data (for manager stats) ────────────────────
+  // ── Manager data from Supabase ─────────────────────────────────
   const loadManagerData = useCallback(async () => {
     if (!supabase || user?.role !== 'manager') return;
-
-    const [{ data: employees }, { data: mistakes }, { data: stores }] = await Promise.all([
-      supabase
-        .from('employees')
-        .select('id, name, store_name, role, results(is_correct, attempted_date)')
-        .order('name'),
-      supabase
-        .from('mistakes')
-        .select('wrong_word, frequency')
-        .order('frequency', { ascending: false }),
-      supabase
-        .from('stores')
-        .select('name')
-        .order('name'),
-    ]);
-
-    setManagerData({
-      employees: employees || [],
-      mistakes: mistakes || [],
-      stores: stores || [],
-    });
+    try {
+      const [{ data: employees }, { data: mistakes }, { data: stores }] = await Promise.all([
+        supabase
+          .from('employees')
+          .select('id, name, store_name, role, results(is_correct, attempted_date)')
+          .order('name'),
+        supabase
+          .from('mistakes')
+          .select('wrong_word, frequency')
+          .order('frequency', { ascending: false }),
+        supabase.from('stores').select('name').order('name'),
+      ]);
+      setManagerData({
+        employees: employees || [],
+        mistakes: mistakes || [],
+        stores: stores || [],
+      });
+    } catch (_) {}
   }, [user?.role]);
 
   useEffect(() => {
     loadManagerData();
-    // Refresh every 30 seconds while manager is viewing
     const timer = window.setInterval(loadManagerData, 30000);
     return () => window.clearInterval(timer);
   }, [loadManagerData]);
 
   return {
-    employeeStats: calculateEmployeeStats(user, localResults),
+    employeeStats: calculateEmployeeStats(user, localResults, localSessions),
     managerStats: calculateManagerStats(managerData),
   };
 }
