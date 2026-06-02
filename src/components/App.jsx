@@ -2,21 +2,24 @@ import { useState } from 'react';
 import { BookOpen, BarChart3, ClipboardList } from 'lucide-react';
 import Layout from './Layout';
 import Login from './Login';
+import LessonList from './LessonPage/LessonList';
 import LessonPage from './LessonPage/LessonPage';
 import EmployeeDashboard from './Dashboard/EmployeeDashboard';
 import ManagerDashboard from './Dashboard/ManagerDashboard';
 import { useAuth } from '../hooks/useAuth';
 import { useLesson } from '../hooks/useLesson';
+import { useLessons } from '../hooks/useLessons';
 import { useDashboard } from '../hooks/useDashboard';
 import '../App.css';
 
 export default function App() {
   const { user, logout, loading } = useAuth();
-  const { lesson, saveLesson, submitAnswer, resetProgress } = useLesson(user);
-  const { employeeStats, managerStats } = useDashboard(user, lesson);
+  const { submitAnswer, resetProgress } = useLesson(user);
+  const { lessons, loading: lessonsLoading } = useLessons();
+  const { employeeStats, managerStats } = useDashboard(user);
   const [view, setView] = useState('dashboard');
+  const [selectedLesson, setSelectedLesson] = useState(null);
 
-  // Wait for Supabase session check
   if (loading) {
     return (
       <div className="app-loading">
@@ -25,14 +28,24 @@ export default function App() {
     );
   }
 
-  if (!user) {
-    return <Login />;
-  }
+  if (!user) return <Login />;
 
   const isManager = user.role === 'manager';
-
-  // Guard: non-manager cannot access manager view
   const safeView = view === 'manager' && !isManager ? 'dashboard' : view;
+
+  const handleSelectLesson = (lesson) => {
+    setSelectedLesson(lesson);
+  };
+
+  const handleBackToList = () => {
+    setSelectedLesson(null);
+  };
+
+  // Switch to lesson view and reset selection
+  const handleLessonTabClick = () => {
+    setView('lesson');
+    setSelectedLesson(null);
+  };
 
   return (
     <Layout user={user} onLogout={logout}>
@@ -47,7 +60,7 @@ export default function App() {
         </button>
         <button
           className={safeView === 'lesson' ? 'active' : ''}
-          onClick={() => setView('lesson')}
+          onClick={handleLessonTabClick}
           type="button"
         >
           <BookOpen size={18} />
@@ -67,28 +80,37 @@ export default function App() {
 
       {safeView === 'dashboard' && (
         isManager ? (
-          <ManagerDashboard stats={managerStats} lesson={lesson} onSaveLesson={saveLesson} />
+          <ManagerDashboard stats={managerStats} lesson={lessons[0]} onSaveLesson={() => {}} />
         ) : (
           <EmployeeDashboard
             user={user}
             stats={employeeStats}
-            onStartLesson={() => setView('lesson')}
+            onStartLesson={() => { setView('lesson'); setSelectedLesson(null); }}
             onReset={resetProgress}
           />
         )
       )}
 
-      {safeView === 'lesson' && (
+      {safeView === 'lesson' && !selectedLesson && (
+        <LessonList
+          lessons={lessons}
+          loading={lessonsLoading}
+          onSelect={handleSelectLesson}
+        />
+      )}
+
+      {safeView === 'lesson' && selectedLesson && (
         <LessonPage
           user={user}
-          lesson={lesson}
+          lesson={selectedLesson}
           onSubmitAnswer={submitAnswer}
           stats={employeeStats}
+          onBack={handleBackToList}
         />
       )}
 
       {safeView === 'manager' && isManager && (
-        <ManagerDashboard stats={managerStats} lesson={lesson} onSaveLesson={saveLesson} />
+        <ManagerDashboard stats={managerStats} lesson={lessons[0]} onSaveLesson={() => {}} />
       )}
     </Layout>
   );

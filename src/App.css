@@ -641,3 +641,78 @@ button {
 }
 .icon-btn:hover         { background: var(--ink); color: #fff; border-color: var(--ink); }
 .icon-btn.danger:hover  { background: var(--warning); color: #fff; border-color: var(--warning); }
+
+/* ── Lesson list grid ────────────────────────────────────────── */
+.lesson-list-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.lesson-card-btn {
+  background: #fff;
+  border: 1px solid var(--line);
+  padding: 22px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.lesson-card-btn:hover {
+  border-color: var(--ink);
+  box-shadow: 0 4px 16px rgba(26,26,26,0.08);
+}
+
+.lesson-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.lesson-card-top .eyebrow { margin: 0; }
+
+.lesson-card-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.lesson-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.difficulty-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  letter-spacing: 0.06em;
+}
+
+.diff-beginner    { background: rgba(46,204,113,.15); color: #147a40; }
+.diff-intermediate{ background: rgba(255,107,53,.15);  color: #c04a10; }
+.diff-advanced    { background: rgba(231,76,60,.12);   color: #a83124; }
+
+/* ── Back button in LessonPage ───────────────────────────────── */
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 13px;
+  padding: 0;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+.back-btn:hover { color: var(--ink); }
