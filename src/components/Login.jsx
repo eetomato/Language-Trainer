@@ -46,10 +46,12 @@ export default function Login() {
 
   // ── Normal login ──────────────────────────────────────────────
   const handleLogin = async (e) => {
+    console.log('[Login] form onSubmit 발화', e?.type);
     e.preventDefault();
     setError('');
     const normalized = name.trim().toUpperCase();
-    if (!normalized || !password) return;
+    console.log('[Login] name:', normalized, '| password length:', password.length);
+    if (!normalized || !password) { console.log('[Login] early return: name or password empty'); return; }
 
     setSubmitting(true);
     const result = await login({ name: normalized, password });
@@ -133,7 +135,12 @@ export default function Login() {
 
           {error && <p className="feedback wrong">{error}</p>}
 
-          <button className="primary-action" type="submit" disabled={submitting || !name.trim() || !password}>
+          <button
+            className="primary-action"
+            type="submit"
+            disabled={submitting || !name.trim() || !password}
+            onClick={() => console.log('[Login] 버튼 onClick', { name, password: password.length, submitting, disabled: submitting || !name.trim() || !password })}
+          >
             <LogIn size={18} />
             {submitting ? 'ログイン中...' : 'ログイン'}
           </button>
