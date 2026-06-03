@@ -78,19 +78,17 @@ export default function LessonPage({ user, lesson, onSubmitAnswer, onSaveSession
         onAllAnswered={() => setPracticeDone(true)}
       />
 
-      {/* C. Shadowing — unlocked after B */}
-      {practiceDone
-        ? <ShadowingSection sentences={sentences} onComplete={() => setShadowingDone(true)} />
-        : <LockedSection label="C. Shadowing — Complete Practice first" />
-      }
+      {/* C. Shadowing — shown only after B */}
+      {practiceDone && !shadowingDone && (
+        <ShadowingSection sentences={sentences} onComplete={() => setShadowingDone(true)} />
+      )}
 
-      {/* D. Output — unlocked after C */}
-      {shadowingDone
-        ? <OutputSection sentences={sentences} onSubmit={() => setOutputDone(true)} />
-        : <LockedSection label="D. Output — Complete Shadowing first" />
-      }
+      {/* D. Output — shown only after C */}
+      {shadowingDone && !outputDone && (
+        <OutputSection sentences={sentences} onSubmit={() => setOutputDone(true)} />
+      )}
 
-      {/* Complete Lesson — unlocked after D */}
+      {/* Complete Lesson — shown only after D */}
       {outputDone && (
         <button type="button" className="primary-action complete-btn" onClick={handleComplete}>
           <Check size={18} /> Complete Lesson
