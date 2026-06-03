@@ -769,3 +769,139 @@ button {
   font-size: 15px;
   color: var(--muted);
 }
+
+/* ── Word hint popup ─────────────────────────────────────────── */
+.question-text-hints { margin: 0; font-size: 19px; }
+.hint-word {
+  position: relative;
+  cursor: pointer;
+  border-bottom: 2px dotted var(--accent);
+  display: inline;
+}
+.hint-popup {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--ink);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 4px;
+  white-space: nowrap;
+  z-index: 10;
+  pointer-events: none;
+}
+.hint-popup::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--ink);
+}
+
+/* ── Shadowing section ───────────────────────────────────────── */
+.shadow-dots { display: flex; gap: 8px; margin-bottom: 20px; }
+.shadow-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--line);
+  transition: background 0.2s;
+}
+.shadow-dot.active { background: var(--accent); }
+.shadow-dot.done   { background: var(--ink); }
+
+.shadow-card {
+  background: #faf8f5;
+  border: 1px solid var(--line);
+  padding: 24px;
+  margin-bottom: 16px;
+}
+.shadow-sentence { font-size: 20px; font-weight: 700; margin: 0 0 6px; }
+.shadow-jp       { color: var(--muted); font-size: 14px; margin: 0 0 16px; }
+
+.tts-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 13px;
+  color: var(--ink);
+  transition: background 0.15s;
+}
+.tts-btn:hover { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+.shadow-goal-row {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+.shadow-progress { margin-left: auto; color: var(--muted); }
+.goal-btn {
+  width: 28px; height: 28px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: #fff;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.shadow-bar-bg {
+  height: 6px; background: var(--line); border-radius: 999px;
+  margin-bottom: 14px; overflow: hidden;
+}
+.shadow-bar-fill {
+  height: 100%; background: var(--accent); border-radius: 999px;
+  transition: width 0.3s;
+}
+
+.shadow-btn {
+  width: 100%;
+  padding: 14px;
+  background: var(--ink);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 800;
+  margin-bottom: 12px;
+  transition: background 0.15s;
+}
+.shadow-btn:hover { background: #333; }
+
+.next-sentence-btn { margin-top: 4px; }
+
+.shadowing-done {
+  display: flex; align-items: center; gap: 8px;
+  padding: 16px 24px;
+  background: rgba(46,204,113,.1);
+  color: #147a40;
+  font-weight: 700;
+  border: 1px solid rgba(46,204,113,.3);
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+/* ── Output section ──────────────────────────────────────────── */
+.output-hint   { color: var(--muted); margin: 0 0 14px; font-size: 14px; }
+.output-ref-list {
+  padding: 0 0 0 18px; margin: 0 0 16px;
+  color: var(--muted); font-size: 14px;
+}
+.output-ref-list li { margin-bottom: 4px; }
+
+.output-form { display: grid; gap: 10px; }
+.output-form textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 12px 14px;
+  font: inherit;
+  resize: vertical;
+  min-height: 110px;
+}
+.output-form textarea:focus { outline: none; border-color: var(--ink); }
+.output-done { color: #147a40; font-weight: 700; margin: 0; }

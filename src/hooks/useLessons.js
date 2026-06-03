@@ -9,18 +9,22 @@ function mapLesson(row) {
     lessonTitle: row.lesson_title,
     topicArea: row.topic_area,
     youtubeUrl: row.youtube_url,
+    youtubeTimestamp: row.youtube_timestamp || null,
     grammarPoint: row.grammar_point,
     vocabulary: row.vocabulary_json || [],
     exampleSentences: row.example_sentences || [],
     difficultyLevel: row.difficulty_level,
-    questions: (row.practice_questions || []).map((q) => ({
-      id: q.id,
-      questionType: q.question_type,
-      questionText: q.question_text,
-      blankAnswer: q.blank_answer,
-      multipleChoice: q.multiple_choice || null,
-      context: q.context,
-    })),
+    questions: (row.practice_questions || [])
+      .slice(0, 3)
+      .map((q) => ({
+        id: q.id,
+        questionType: q.question_type,
+        questionText: q.question_text,
+        blankAnswer: q.blank_answer,
+        multipleChoice: q.multiple_choice || null,
+        wordHints: q.word_hints || {},
+        context: q.context,
+      })),
   };
 }
 

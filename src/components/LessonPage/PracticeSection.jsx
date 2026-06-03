@@ -1,56 +1,74 @@
 import { useRef, useState } from 'react';
-import { Check, Send } from 'lucide-react';
+import { Send } from 'lucide-react';
 import { normalizeAnswer } from '../../utils/dataFormatter';
 
-export default function PracticeSection({ lesson, onSubmitAnswer, onSaveSession }) {
+// Render question text with clickable word hints
+function QuestionText({ text, wordHints = {} }) {
+  const [popup, setPopup] = useState(null);
+  if (!Object.keys(wordHints).length) return <h3>{text}</h3>;
+
+  const words = text.split(/(\s+)/);
+  return (
+    <h3 className="question-text-hints">
+      {words.map((word, i) => {
+        const clean = word.replace(/[.,!?。、]/g, '').toLowerCase();
+        const hint = wordHints[clean] || wordHints[word];
+        if (hint) {
+          return (
+            <span key={i} className="hint-word" onClick={() => setPopup(popup === i ? null : i)}>
+              {word}
+              {popup === i && (
+                <span className="hint-popup" onClick={(e) => e.stopPropagation()}>
+                  {hint}
+                </span>
+              )}
+            </span>
+          );
+        }
+        return <span key={i}>{word}</span>;
+      })}
+    </h3>
+  );
+}
+
+export default function PracticeSection({ lesson, onSubmitAnswer, onAllAnswered }) {
   const startTime = useRef(Date.now());
   const [answers, setAnswers] = useState({});
   const [feedback, setFeedback] = useState({});
-  const [completed, setCompleted] = useState(false);
 
   const questions = lesson.questions || [];
   const allAnswered = questions.length > 0 && questions.every((q) => feedback[q.id] !== undefined);
 
-  // ── Check and save one answer ──────────────────────────────────
+  // Notify parent when all answered
+  const prevAllAnswered = useRef(false);
+  if (allAnswered && !prevAllAnswered.current) {
+    prevAllAnswered.current = true;
+    onAllAnswered?.();
+  }
+
   const checkAnswer = async (question, answer) => {
-    if (feedback[question.id] !== undefined) return; // already answered
+    if (feedback[question.id] !== undefined) return;
 
     let isCorrect = false;
     if (question.questionType === 'multiple_choice') {
-      // Check against option's correct flag OR blank_answer
       const options = question.multipleChoice || [];
       const chosen = options.find((o) => o.text === answer);
       isCorrect = chosen?.correct === true;
     } else {
-      // fill_blank / roleplay
       isCorrect = normalizeAnswer(answer) === normalizeAnswer(question.blankAnswer);
     }
 
-    setFeedback((prev) => ({
-      ...prev,
-      [question.id]: { isCorrect, correctAnswer: question.blankAnswer },
-    }));
-
+    setFeedback((p) => ({ ...p, [question.id]: { isCorrect, correctAnswer: question.blankAnswer } }));
     await onSubmitAnswer({ question, userAnswer: answer, isCorrect });
   };
 
-  // ── Complete lesson ────────────────────────────────────────────
-  const handleComplete = () => {
-    const studyMinutes = Math.max(1, Math.round((Date.now() - startTime.current) / 60000));
-    setCompleted(true);
-    if (onSaveSession) onSaveSession({ lessonId: lesson.id, studyMinutes });
-  };
-
-  // ── Type A: fill-in-blank ──────────────────────────────────────
+  // Type A: fill blank
   const renderFillBlank = (question) => {
     const done = feedback[question.id] !== undefined;
     return (
       <form
         className="answer-form"
-        onSubmit={(e) => {
-          e.preventDefault();
-          checkAnswer(question, answers[question.id] || '');
-        }}
+        onSubmit={(e) => { e.preventDefault(); checkAnswer(question, answers[question.id] || ''); }}
       >
         <input
           type="text"
@@ -68,18 +86,17 @@ export default function PracticeSection({ lesson, onSubmitAnswer, onSaveSession 
     );
   };
 
-  // ── Type B: multiple choice ────────────────────────────────────
+  // Type B: multiple choice
   const renderMultipleChoice = (question) => {
     const done = feedback[question.id] !== undefined;
     const options = question.multipleChoice || [];
-
     return (
       <div className="mc-grid">
         {options.map((option, i) => {
           let cls = 'mc-btn';
           if (done) {
             if (option.correct) cls += ' mc-correct';
-            else if (answers[question.id] === option.text && !option.correct) cls += ' mc-wrong';
+            else if (answers[question.id] === option.text) cls += ' mc-wrong';
           }
           return (
             <button
@@ -100,29 +117,10 @@ export default function PracticeSection({ lesson, onSubmitAnswer, onSaveSession 
     );
   };
 
-  // ── Completed screen ───────────────────────────────────────────
-  if (completed) {
-    const correct = Object.values(feedback).filter((f) => f.isCorrect).length;
-    const total = questions.length;
-    const pct = total ? Math.round((correct / total) * 100) : 0;
-    return (
-      <section className="lesson-section complete-section">
-        <p className="eyebrow">Lesson Complete</p>
-        <div className="complete-score">
-          <strong>{pct}%</strong>
-          <p>{correct} / {total} correct</p>
-        </div>
-        <p className="complete-msg">
-          {pct >= 80 ? '素晴らしい！接客でもすぐ使えます。' : '復習してもう一度試してみてください。'}
-        </p>
-      </section>
-    );
-  }
-
   return (
     <section className="lesson-section practice-section">
       <div className="section-heading">
-        <p className="eyebrow">E. Practice</p>
+        <p className="eyebrow">B. Practice</p>
         <h2>Use it now</h2>
       </div>
 
@@ -131,11 +129,10 @@ export default function PracticeSection({ lesson, onSubmitAnswer, onSaveSession 
           <article key={question.id} className="practice-card">
             <div className="question-topline">
               <span>Q{index + 1}</span>
-              <small>
-                {question.questionType === 'multiple_choice' ? 'Type B — 選択' : 'Type A — 入力'}
-              </small>
+              <small>{question.questionType === 'multiple_choice' ? 'Type B — 選択' : 'Type A — 入力'}</small>
             </div>
-            <h3>{question.questionText}</h3>
+
+            <QuestionText text={question.questionText} wordHints={question.wordHints} />
 
             {question.questionType === 'multiple_choice'
               ? renderMultipleChoice(question)
@@ -151,12 +148,6 @@ export default function PracticeSection({ lesson, onSubmitAnswer, onSaveSession 
           </article>
         ))}
       </div>
-
-      {allAnswered && (
-        <button type="button" className="primary-action complete-btn" onClick={handleComplete}>
-          <Check size={18} /> Complete Lesson
-        </button>
-      )}
     </section>
   );
 }
