@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { BookOpen, BarChart3, ClipboardList } from 'lucide-react';
 import Layout from './Layout';
 import Login from './Login';
@@ -15,7 +15,7 @@ import '../App.css';
 export default function App() {
   const { user, logout, loading } = useAuth();
   const { submitAnswer, saveSession, resetProgress } = useLesson(user);
-  const { lessons, loading: lessonsLoading } = useLessons();
+  const { lessons, loading: lessonsLoading, refresh: refreshLessons } = useLessons();
   const { employeeStats, managerStats } = useDashboard(user);
   const [view, setView] = useState('dashboard');
   const [selectedLesson, setSelectedLesson] = useState(null);
@@ -33,70 +33,30 @@ export default function App() {
   const isManager = user.role === 'manager';
   const safeView = view === 'manager' && !isManager ? 'dashboard' : view;
 
-  const handleSelectLesson = (lesson) => {
-    setSelectedLesson(lesson);
-  };
-
-  const handleBackToList = () => {
-    setSelectedLesson(null);
-  };
-
-  // Switch to lesson view and reset selection
-  const handleLessonTabClick = () => {
-    setView('lesson');
-    setSelectedLesson(null);
-  };
-
   return (
     <Layout user={user} onLogout={logout}>
       <nav className="view-tabs" aria-label="Main views">
-        <button
-          className={safeView === 'dashboard' ? 'active' : ''}
-          onClick={() => setView('dashboard')}
-          type="button"
-        >
-          <BarChart3 size={18} />
-          Dashboard
+        <button className={safeView === 'dashboard' ? 'active' : ''} onClick={() => setView('dashboard')} type="button">
+          <BarChart3 size={18} /> Dashboard
         </button>
-        <button
-          className={safeView === 'lesson' ? 'active' : ''}
-          onClick={handleLessonTabClick}
-          type="button"
-        >
-          <BookOpen size={18} />
-          Lesson
+        <button className={safeView === 'lesson' ? 'active' : ''} onClick={() => { setView('lesson'); setSelectedLesson(null); }} type="button">
+          <BookOpen size={18} /> Lesson
         </button>
         {isManager && (
-          <button
-            className={safeView === 'manager' ? 'active' : ''}
-            onClick={() => setView('manager')}
-            type="button"
-          >
-            <ClipboardList size={18} />
-            Manager
+          <button className={safeView === 'manager' ? 'active' : ''} onClick={() => setView('manager')} type="button">
+            <ClipboardList size={18} /> Manager
           </button>
         )}
       </nav>
 
       {safeView === 'dashboard' && (
-        isManager ? (
-          <ManagerDashboard stats={managerStats} lesson={lessons[0]} onSaveLesson={() => {}} />
-        ) : (
-          <EmployeeDashboard
-            user={user}
-            stats={employeeStats}
-            onStartLesson={() => { setView('lesson'); setSelectedLesson(null); }}
-            onReset={resetProgress}
-          />
-        )
+        isManager
+          ? <ManagerDashboard stats={managerStats} lessons={lessons} onRefreshLessons={refreshLessons} />
+          : <EmployeeDashboard user={user} stats={employeeStats} onStartLesson={() => { setView('lesson'); setSelectedLesson(null); }} onReset={resetProgress} />
       )}
 
       {safeView === 'lesson' && !selectedLesson && (
-        <LessonList
-          lessons={lessons}
-          loading={lessonsLoading}
-          onSelect={handleSelectLesson}
-        />
+        <LessonList lessons={lessons} loading={lessonsLoading} onSelect={setSelectedLesson} />
       )}
 
       {safeView === 'lesson' && selectedLesson && (
@@ -106,12 +66,12 @@ export default function App() {
           onSubmitAnswer={submitAnswer}
           onSaveSession={saveSession}
           stats={employeeStats}
-          onBack={handleBackToList}
+          onBack={() => setSelectedLesson(null)}
         />
       )}
 
       {safeView === 'manager' && isManager && (
-        <ManagerDashboard stats={managerStats} lesson={lessons[0]} onSaveLesson={() => {}} />
+        <ManagerDashboard stats={managerStats} lessons={lessons} onRefreshLessons={refreshLessons} />
       )}
     </Layout>
   );

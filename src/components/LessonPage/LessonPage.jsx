@@ -1,25 +1,30 @@
 import { useState } from 'react';
-import { ChevronLeft, Check } from 'lucide-react';
+import { ChevronLeft, Check, Lock } from 'lucide-react';
 import YouTubeEmbed from './YouTubeEmbed';
-import VocabularyBlock from './VocabularyBlock';
-import ExampleSentences from './ExampleSentences';
-import PracticeSection from './PracticeSection';
 import ShadowingSection from './ShadowingSection';
 import OutputSection from './OutputSection';
+import PracticeSection from './PracticeSection';
+
+function LockedSection({ label }) {
+  return (
+    <div className="locked-section">
+      <Lock size={16} />
+      <span>{label}</span>
+    </div>
+  );
+}
 
 export default function LessonPage({ user, lesson, onSubmitAnswer, onSaveSession, stats, onBack }) {
-  // Track completion of each section
-  const [practicesDone, setPracticesDone] = useState(false);
+  const [practiceDone, setPracticeDone] = useState(false);
   const [shadowingDone, setShadowingDone] = useState(false);
   const [outputDone, setOutputDone] = useState(false);
   const [lessonComplete, setLessonComplete] = useState(false);
 
-  const canComplete = practicesDone && shadowingDone && outputDone;
+  const sentences = lesson.sentences || [];
 
   const handleComplete = () => {
     setLessonComplete(true);
-    // Calculate session time roughly (shadowing + output adds time)
-    onSaveSession?.({ lessonId: lesson.id, studyMinutes: Math.max(5, lesson.questions.length * 3) });
+    onSaveSession?.({ lessonId: lesson.id, studyMinutes: Math.max(5, sentences.length * 4) });
   };
 
   if (lessonComplete) {
@@ -32,9 +37,7 @@ export default function LessonPage({ user, lesson, onSubmitAnswer, onSaveSession
             <p>{stats.completed} attempts saved</p>
           </div>
           <p className="complete-msg">
-            {stats.score >= 80
-              ? '素晴らしい！接客でもすぐ使えます。'
-              : '復習してもう一度試してみてください。'}
+            {stats.score >= 80 ? '素晴らしい！接客でもすぐ使えます。' : '復習してもう一度試してみてください。'}
           </p>
           <button type="button" className="primary-action compact" style={{ marginTop: 24 }} onClick={onBack}>
             ← レッスン一覧へ
@@ -56,39 +59,39 @@ export default function LessonPage({ user, lesson, onSubmitAnswer, onSaveSession
           )}
           <p className="eyebrow">{lesson.topicArea}</p>
           <h2>{lesson.lessonTitle}</h2>
-          <p>{user.name}, follow the steps A → D to complete this lesson.</p>
+          <p>{user.name} — A → B → C → D の順で進んでください。</p>
         </div>
         <div className="score-panel">
           <span>Current score</span>
           <strong>{stats.score}%</strong>
-          <small>{stats.completed} attempts saved</small>
+          <small>{stats.completed} attempts</small>
         </div>
       </section>
 
-      {/* A. Video */}
+      {/* A. Video — always visible */}
       <YouTubeEmbed url={lesson.youtubeUrl} timestamp={lesson.youtubeTimestamp} />
 
-      {/* B. Practice (Type A / B) */}
+      {/* B. Practice — always visible, unlocks C */}
       <PracticeSection
         lesson={lesson}
         onSubmitAnswer={onSubmitAnswer}
-        onAllAnswered={() => setPracticesDone(true)}
+        onAllAnswered={() => setPracticeDone(true)}
       />
 
-      {/* C. Shadowing */}
-      <ShadowingSection
-        sentences={lesson.exampleSentences}
-        onComplete={() => setShadowingDone(true)}
-      />
+      {/* C. Shadowing — unlocked after B */}
+      {practiceDone
+        ? <ShadowingSection sentences={sentences} onComplete={() => setShadowingDone(true)} />
+        : <LockedSection label="C. Shadowing — Complete Practice first" />
+      }
 
-      {/* D. Output */}
-      <OutputSection
-        sentences={lesson.exampleSentences}
-        onSubmit={() => setOutputDone(true)}
-      />
+      {/* D. Output — unlocked after C */}
+      {shadowingDone
+        ? <OutputSection sentences={sentences} onSubmit={() => setOutputDone(true)} />
+        : <LockedSection label="D. Output — Complete Shadowing first" />
+      }
 
-      {/* Complete Lesson */}
-      {canComplete && (
+      {/* Complete Lesson — unlocked after D */}
+      {outputDone && (
         <button type="button" className="primary-action complete-btn" onClick={handleComplete}>
           <Check size={18} /> Complete Lesson
         </button>

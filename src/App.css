@@ -915,3 +915,145 @@ button {
 }
 .output-form textarea:focus { outline: none; border-color: var(--ink); }
 .output-done { color: #147a40; font-weight: 700; margin: 0; }
+
+/* ── Locked section ──────────────────────────────────────────── */
+.locked-section {
+  display: flex; align-items: center; gap: 10px;
+  padding: 18px 24px;
+  background: #f5f5f0;
+  border: 1px dashed var(--line);
+  border-radius: 4px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* ── Sentence cards ──────────────────────────────────────────── */
+.sentence-cards { display: grid; gap: 16px; }
+
+.sentence-card {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 20px;
+  background: #fff;
+}
+
+.sentence-card.done-card {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(46,204,113,.08);
+  border-color: rgba(46,204,113,.4);
+  color: #147a40;
+  font-weight: 700;
+}
+
+.sentence-card.locked-card {
+  display: flex; align-items: center; gap: 10px;
+  background: #fafafa;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.sentence-card-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 12px;
+}
+
+.sentence-num { font-size: 12px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+
+.stage-dots { display: flex; gap: 6px; }
+.stage-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--line);
+  transition: background 0.2s;
+}
+.stage-dot.active { background: var(--accent); }
+.stage-dot.done   { background: var(--ink); }
+
+.sentence-full {
+  font-size: 17px; font-weight: 600;
+  margin: 0 0 16px;
+  line-height: 1.5;
+}
+
+/* ── Chunk stage ─────────────────────────────────────────────── */
+.stage-label { font-size: 12px; color: var(--muted); font-weight: 700; margin: 0 0 10px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+.chunk-answer {
+  min-height: 48px;
+  border: 2px dashed var(--line);
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+  margin-bottom: 10px;
+  transition: border-color 0.2s;
+}
+.chunk-answer.shake { border-color: var(--warning); animation: shake 0.4s; }
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  25%      { transform: translateX(-6px); }
+  75%      { transform: translateX(6px); }
+}
+
+.chunk-placeholder { color: var(--muted); font-size: 13px; }
+
+.chunk-pool { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+
+.chunk-token {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 14px;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.15s, border-color 0.15s;
+}
+.chunk-token:hover { border-color: var(--ink); background: #f5f5f0; }
+.chunk-token.selected { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+/* ── Blank stage ─────────────────────────────────────────────── */
+.blank-sentence {
+  display: flex; flex-wrap: wrap; gap: 6px 4px; align-items: center;
+  margin-bottom: 12px; font-size: 16px;
+}
+.blank-chunk { font-weight: 600; }
+.blank-input {
+  border: none; border-bottom: 2px solid var(--accent);
+  padding: 4px 6px; font: inherit; font-size: 15px; text-align: center;
+  background: transparent; outline: none;
+  min-width: 60px;
+}
+.blank-input.wrong { border-bottom-color: var(--warning); }
+.blank-feedback { margin: 4px 0 8px; font-weight: 700; font-size: 14px; }
+.blank-feedback.correct { color: #147a40; }
+.blank-feedback.wrong   { color: #a83124; }
+
+/* ── Admin lesson form ───────────────────────────────────────── */
+.lesson-sentences-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin: 8px 0 4px;
+}
+
+.sentence-input-block {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 16px;
+  display: grid; gap: 8px;
+  background: #fafafa;
+}
+
+.sentence-input-header {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 13px; font-weight: 700; color: var(--muted);
+}
+
+/* ── Output feedback ─────────────────────────────────────────── */
+.output-feedback {
+  background: #faf8f5;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 18px;
+  margin-top: 8px;
+}
+.feedback-text { margin: 8px 0 0; line-height: 1.7; }
+
+/* spin for loader icon */
+.spin-icon { animation: spin 0.7s linear infinite; }

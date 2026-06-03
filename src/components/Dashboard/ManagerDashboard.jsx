@@ -5,25 +5,21 @@ import StaffManagement from '../Admin/StaffManagement';
 import StoreManagement from '../Admin/StoreManagement';
 import { supabase } from '../../utils/supabaseClient';
 
-export default function ManagerDashboard({ stats, lesson, onSaveLesson }) {
+export default function ManagerDashboard({ stats, lessons = [], onRefreshLessons }) {
   return (
     <section className="dashboard-page manager-page">
       <div className="dashboard-hero">
         <div>
           <p className="eyebrow">Manager dashboard</p>
           <h2>Store learning overview</h2>
-          <p>Track progress, update the video, and spot weak vocabulary.</p>
+          <p>Track progress, update lessons, and manage staff.</p>
         </div>
       </div>
 
-      {/* Analytics */}
       <ViewReports stats={stats} />
       <ManageEmployees employees={stats.rankings} />
+      <AddLesson lessons={lessons} onRefresh={onRefreshLessons} />
 
-      {/* Lesson settings */}
-      <AddLesson lesson={lesson} onSaveLesson={onSaveLesson} />
-
-      {/* Staff & store admin — only shown when Supabase is connected */}
       {supabase ? (
         <>
           <StaffManagement />
@@ -32,9 +28,7 @@ export default function ManagerDashboard({ stats, lesson, onSaveLesson }) {
       ) : (
         <section className="dashboard-band">
           <p className="eyebrow">Admin</p>
-          <p style={{ color: '#888', marginTop: 8 }}>
-            スタッフ・店舗管理はSupabase接続後に使用できます。
-          </p>
+          <p style={{ color: '#888', marginTop: 8 }}>Supabase接続後に使用できます。</p>
         </section>
       )}
     </section>
