@@ -43,6 +43,16 @@ export default function AddLesson({ lessons = [], onRefresh }) {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState(null);
 
+  const resetForm = () => {
+    setTitle('');
+    setTopic('');
+    setYoutubeUrl('');
+    setTimestamp('');
+    setWeekNumber(1);
+    setDayNumber(1);
+    setRawSentences([{ ...EMPTY_SENTENCE }, { ...EMPTY_SENTENCE }, { ...EMPTY_SENTENCE }]);
+  };
+
   const updateSentence = (i, field, value) => {
     setRawSentences((prev) => prev.map((s, j) => j === i ? { ...s, [field]: value } : s));
   };
@@ -72,21 +82,25 @@ export default function AddLesson({ lessons = [], onRefresh }) {
       difficulty_level: 'beginner',
     };
 
+    // lessonId는 상태값(string)이므로 truthy 체크로 UPDATE/INSERT 분기
     let error;
     if (lessonId) {
-      console.log('[AddLesson] UPDATE 실행', { lessonId, payload });
+      console.log('[AddLesson] UPDATE 실행', { lessonId });
       ({ error } = await supabase.from('lessons').update(payload).eq('id', lessonId));
     } else {
       console.log('[AddLesson] INSERT 실행', { payload });
-      ({ error } = await supabase.from('lessons').insert(payload));
+      // id는 payload에 포함하지 않음 — Supabase가 자동 생성
+      ({ error } = await supabase.from('lessons').insert(payload).select());
     }
 
     console.log('[AddLesson] 저장 결과', { error });
     setSaving(false);
+
     if (error) {
       setMsg({ type: 'err', text: error.message });
     } else {
-      setMsg({ type: 'ok', text: 'レッスンを保存しました！' });
+      setMsg({ type: 'ok', text: '저장 완료!' });
+      resetForm();
       onRefresh?.();
     }
   };
