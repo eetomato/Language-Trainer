@@ -1,14 +1,13 @@
 import { useState } from 'react';
-import { ChevronLeft, Check } from 'lucide-react';
+import { ChevronLeft, Check, RotateCcw } from 'lucide-react';
 import YouTubeEmbed from './YouTubeEmbed';
 import ShadowingSection from './ShadowingSection';
 import OutputSection from './OutputSection';
 import PracticeSection from './PracticeSection';
 
+// step: 'B' | 'C' | 'D' | 'done'
 export default function LessonPage({ user, lesson, onSubmitAnswer, onSaveSession, stats, onBack }) {
-  const [practiceDone, setPracticeDone] = useState(false);
-  const [shadowingDone, setShadowingDone] = useState(false);
-  const [outputDone, setOutputDone] = useState(false);
+  const [step, setStep] = useState('B');
   const [lessonComplete, setLessonComplete] = useState(false);
 
   const sentences = lesson.sentences || [];
@@ -58,36 +57,49 @@ export default function LessonPage({ user, lesson, onSubmitAnswer, onSaveSession
       {/* A. Video — always visible */}
       <YouTubeEmbed url={lesson.youtubeUrl} timestamp={lesson.youtubeTimestamp} />
 
-      {/* B. Practice — visible until complete */}
-      {!practiceDone && (
+      {/* B. Practice */}
+      {step === 'B' && (
         <PracticeSection
           lesson={lesson}
           onSubmitAnswer={onSubmitAnswer}
-          onAllAnswered={() => setPracticeDone(true)}
+          onAllAnswered={() => setStep('C')}
         />
       )}
 
-      {/* C. Shadowing — appears only after B, disappears after C */}
-      {practiceDone && !shadowingDone && (
+      {/* C. Shadowing */}
+      {step === 'C' && (
         <ShadowingSection
           sentences={sentences}
-          onComplete={() => setShadowingDone(true)}
+          onComplete={() => setStep('D')}
         />
       )}
 
-      {/* D. Output — appears only after C, disappears after D */}
-      {shadowingDone && !outputDone && (
+      {/* D. Output */}
+      {step === 'D' && (
         <OutputSection
           sentences={sentences}
-          onSubmit={() => setOutputDone(true)}
+          onSubmit={() => setStep('done')}
         />
       )}
 
-      {/* Complete — appears only after D */}
-      {outputDone && (
-        <button type="button" className="primary-action complete-btn" onClick={handleComplete}>
-          <Check size={18} /> Complete Lesson
-        </button>
+      {/* Complete */}
+      {step === 'done' && (
+        <div className="done-actions">
+          <button type="button" className="primary-action complete-btn" onClick={handleComplete}>
+            <Check size={18} /> Complete Lesson
+          </button>
+          <div className="retry-buttons">
+            <p className="retry-label">다시 학습하기</p>
+            <div className="retry-row">
+              <button type="button" className="retry-btn" onClick={() => setStep('B')}>
+                <RotateCcw size={15} /> B. Practice 다시
+              </button>
+              <button type="button" className="retry-btn" onClick={() => setStep('C')}>
+                <RotateCcw size={15} /> C. Shadowing 다시
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

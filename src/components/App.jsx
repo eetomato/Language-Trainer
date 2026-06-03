@@ -16,7 +16,7 @@ export default function App() {
   const { submitAnswer, saveSession, resetProgress } = useLesson(user);
   const { lessons, loading: lessonsLoading, refresh: refreshLessons } = useLessons();
   const { employeeStats, managerStats } = useDashboard(user);
-  const [view, setView] = useState('lesson'); // default to lesson for staff
+  const [view, setView] = useState('dashboard');
 
   if (loading) {
     return (
@@ -35,18 +35,18 @@ export default function App() {
     <Layout user={user} onLogout={logout}>
       <nav className="view-tabs" aria-label="Main views">
         <button
-          className={safeView === 'lesson' ? 'active' : ''}
-          onClick={() => setView('lesson')}
-          type="button"
-        >
-          <BookOpen size={18} /> Lesson
-        </button>
-        <button
           className={safeView === 'dashboard' ? 'active' : ''}
           onClick={() => setView('dashboard')}
           type="button"
         >
           <BarChart3 size={18} /> Dashboard
+        </button>
+        <button
+          className={safeView === 'lesson' ? 'active' : ''}
+          onClick={() => setView('lesson')}
+          type="button"
+        >
+          <BookOpen size={18} /> Lesson
         </button>
         {isManager && (
           <button
