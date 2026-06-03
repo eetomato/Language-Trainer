@@ -99,9 +99,12 @@ export default function AddLesson({ lessons = [], onRefresh }) {
     if (error) {
       setMsg({ type: 'err', text: error.message });
     } else {
+      // msg 먼저 표시 → 500ms 후 폼 초기화 + 목록 갱신
       setMsg({ type: 'ok', text: '저장 완료!' });
-      resetForm();
-      onRefresh?.();
+      setTimeout(() => {
+        resetForm();
+        onRefresh?.();
+      }, 500);
     }
   };
 

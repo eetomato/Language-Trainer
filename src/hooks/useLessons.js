@@ -25,6 +25,7 @@ export function useLessons() {
 
   const fetch = useCallback(() => {
     if (!supabase) {
+      console.warn('[useLessons] Supabase 미연결 → defaultLesson 사용');
       setLessons([defaultLesson]);
       setLoading(false);
       return;
@@ -33,11 +34,24 @@ export function useLessons() {
     supabase
       .from('lessons')
       .select('*')
-      .order('created_at')
+      .order('week_number', { ascending: true })
+      .order('day_number', { ascending: true })
       .then(({ data, error }) => {
-        setLessons(error || !data?.length ? [defaultLesson] : data.map(mapLesson));
+        if (error) {
+          console.error('[useLessons] Supabase 오류 → defaultLesson 사용', error);
+          setLessons([defaultLesson]);
+        } else if (!data?.length) {
+          console.warn('[useLessons] 레슨 없음 → defaultLesson 사용');
+          setLessons([defaultLesson]);
+        } else {
+          console.log(`[useLessons] ${data.length}개 레슨 로드 완료`);
+          setLessons(data.map(mapLesson));
+        }
       })
-      .catch(() => setLessons([defaultLesson]))
+      .catch((e) => {
+        console.error('[useLessons] fetch 실패', e);
+        setLessons([defaultLesson]);
+      })
       .finally(() => setLoading(false));
   }, []);
 
