@@ -548,9 +548,19 @@ button {
   display: grid;
   place-items: center;
   background: var(--ink);
-  color: #fff;
-  letter-spacing: 0.1em;
-  font-size: 14px;
+}
+
+.loading-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(255,255,255,0.2);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* ── Manager hint (subtle login button) ─────────────────────── */

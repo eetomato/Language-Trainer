@@ -23,7 +23,7 @@ export default function App() {
   if (loading) {
     return (
       <div className="app-loading">
-        <p>Loading...</p>
+        <div className="loading-spinner" />
       </div>
     );
   }
