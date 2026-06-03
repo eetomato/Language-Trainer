@@ -13,6 +13,8 @@ function mapLesson(row) {
     vocabulary: row.vocabulary_json || [],
     exampleSentences: row.example_sentences || [],
     difficultyLevel: row.difficulty_level,
+    weekNumber: row.week_number || 1,
+    dayNumber: row.day_number || 1,
     sentences: row.sentences || [],
   };
 }

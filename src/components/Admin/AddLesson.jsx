@@ -26,6 +26,8 @@ export default function AddLesson({ lessons = [], onRefresh }) {
   const [topic, setTopic] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [timestamp, setTimestamp] = useState('');
+  const [weekNumber, setWeekNumber] = useState(1);
+  const [dayNumber, setDayNumber] = useState(1);
   const [rawSentences, setRawSentences] = useState([
     { ...EMPTY_SENTENCE },
     { ...EMPTY_SENTENCE },
@@ -58,6 +60,8 @@ export default function AddLesson({ lessons = [], onRefresh }) {
       topic_area: topic,
       youtube_url: youtubeUrl,
       youtube_timestamp: timestamp || null,
+      week_number: parseInt(weekNumber) || 1,
+      day_number: parseInt(dayNumber) || 1,
       sentences,
       vocabulary_json: [],
       example_sentences: sentences.map((s) => ({ japanese: '', english: s.text })),
@@ -96,6 +100,20 @@ export default function AddLesson({ lessons = [], onRefresh }) {
       <form className="admin-form lesson-form" onSubmit={handleSave}>
 
         {/* Basic info */}
+        {/* Week / Day */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div>
+            <label>Week</label>
+            <input type="number" min="1" max="52" value={weekNumber}
+              onChange={(e) => setWeekNumber(e.target.value)} />
+          </div>
+          <div>
+            <label>Day (1–6 = 신규, 7 = 테스트)</label>
+            <input type="number" min="1" max="7" value={dayNumber}
+              onChange={(e) => setDayNumber(e.target.value)} />
+          </div>
+        </div>
+
         <label>レッスンタイトル</label>
         <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Size Expression" required />
 

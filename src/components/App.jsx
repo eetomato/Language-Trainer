@@ -1,9 +1,8 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { BookOpen, BarChart3, ClipboardList } from 'lucide-react';
 import Layout from './Layout';
 import Login from './Login';
-import LessonList from './LessonPage/LessonList';
-import LessonPage from './LessonPage/LessonPage';
+import LessonFlow from './LessonPage/LessonFlow';
 import EmployeeDashboard from './Dashboard/EmployeeDashboard';
 import ManagerDashboard from './Dashboard/ManagerDashboard';
 import { useAuth } from '../hooks/useAuth';
@@ -17,8 +16,7 @@ export default function App() {
   const { submitAnswer, saveSession, resetProgress } = useLesson(user);
   const { lessons, loading: lessonsLoading, refresh: refreshLessons } = useLessons();
   const { employeeStats, managerStats } = useDashboard(user);
-  const [view, setView] = useState('dashboard');
-  const [selectedLesson, setSelectedLesson] = useState(null);
+  const [view, setView] = useState('lesson'); // default to lesson for staff
 
   if (loading) {
     return (
@@ -31,43 +29,56 @@ export default function App() {
   if (!user) return <Login />;
 
   const isManager = user.role === 'manager';
-  const safeView = view === 'manager' && !isManager ? 'dashboard' : view;
+  const safeView = view === 'manager' && !isManager ? 'lesson' : view;
 
   return (
     <Layout user={user} onLogout={logout}>
       <nav className="view-tabs" aria-label="Main views">
-        <button className={safeView === 'dashboard' ? 'active' : ''} onClick={() => setView('dashboard')} type="button">
-          <BarChart3 size={18} /> Dashboard
-        </button>
-        <button className={safeView === 'lesson' ? 'active' : ''} onClick={() => { setView('lesson'); setSelectedLesson(null); }} type="button">
+        <button
+          className={safeView === 'lesson' ? 'active' : ''}
+          onClick={() => setView('lesson')}
+          type="button"
+        >
           <BookOpen size={18} /> Lesson
         </button>
+        <button
+          className={safeView === 'dashboard' ? 'active' : ''}
+          onClick={() => setView('dashboard')}
+          type="button"
+        >
+          <BarChart3 size={18} /> Dashboard
+        </button>
         {isManager && (
-          <button className={safeView === 'manager' ? 'active' : ''} onClick={() => setView('manager')} type="button">
+          <button
+            className={safeView === 'manager' ? 'active' : ''}
+            onClick={() => setView('manager')}
+            type="button"
+          >
             <ClipboardList size={18} /> Manager
           </button>
         )}
       </nav>
 
+      {safeView === 'lesson' && (
+        <LessonFlow
+          user={user}
+          lessons={lessons}
+          lessonsLoading={lessonsLoading}
+          submitAnswer={submitAnswer}
+          saveSession={saveSession}
+          employeeStats={employeeStats}
+        />
+      )}
+
       {safeView === 'dashboard' && (
         isManager
           ? <ManagerDashboard stats={managerStats} lessons={lessons} onRefreshLessons={refreshLessons} />
-          : <EmployeeDashboard user={user} stats={employeeStats} onStartLesson={() => { setView('lesson'); setSelectedLesson(null); }} onReset={resetProgress} />
-      )}
-
-      {safeView === 'lesson' && !selectedLesson && (
-        <LessonList lessons={lessons} loading={lessonsLoading} onSelect={setSelectedLesson} />
-      )}
-
-      {safeView === 'lesson' && selectedLesson && (
-        <LessonPage
-          user={user}
-          lesson={selectedLesson}
-          onSubmitAnswer={submitAnswer}
-          onSaveSession={saveSession}
-          stats={employeeStats}
-          onBack={() => setSelectedLesson(null)}
-        />
+          : <EmployeeDashboard
+              user={user}
+              stats={employeeStats}
+              onStartLesson={() => setView('lesson')}
+              onReset={resetProgress}
+            />
       )}
 
       {safeView === 'manager' && isManager && (
