@@ -73,12 +73,25 @@ export function useAuth() {
       if (!employee) return { error: 'not_registered' };
       if (!employee.auth_id) return { error: null, firstLogin: true, employee };
 
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email: employee.email,
         password,
       });
 
       if (signInError) return { error: 'wrong_password' };
+
+      // persistSession:false では onAuthStateChange が発火しないため直接セット
+      const authUserId = signInData?.user?.id ?? employee.auth_id;
+      const profile = await loadProfile(authUserId);
+      if (profile) {
+        setUser({
+          id: profile.id,
+          name: profile.name,
+          storeName: profile.store_name,
+          role: profile.role || 'staff',
+        });
+      }
+
       return { error: null, firstLogin: false };
 
     } catch (_) {
