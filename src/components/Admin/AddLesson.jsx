@@ -21,7 +21,7 @@ function parseSentences(rawList) {
 }
 
 export default function AddLesson({ lessons = [], onRefresh }) {
-  const [lessonId, setLessonId] = useState(lessons[0]?.id || '');
+  const [lessonId, setLessonId] = useState(''); // '' = 新規INSERT
   const [title, setTitle] = useState('');
   const [topic, setTopic] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
@@ -45,10 +45,12 @@ export default function AddLesson({ lessons = [], onRefresh }) {
 
   const handleSave = async (e) => {
     e.preventDefault();
+    console.log('[AddLesson] 저장 버튼 클릭', { supabaseExists: !!supabase, lessonId, title, youtubeUrl });
     if (!supabase) { setMsg({ type: 'err', text: 'Supabase not connected.' }); return; }
     setSaving(true);
 
     const sentences = parseSentences(rawSentences);
+    console.log('[AddLesson] parseSentences 결과', sentences);
     if (!sentences.length) {
       setMsg({ type: 'err', text: '文章を1つ以上入力してください。' });
       setSaving(false);
@@ -70,11 +72,14 @@ export default function AddLesson({ lessons = [], onRefresh }) {
 
     let error;
     if (lessonId) {
+      console.log('[AddLesson] UPDATE 실행', { lessonId, payload });
       ({ error } = await supabase.from('lessons').update(payload).eq('id', lessonId));
     } else {
+      console.log('[AddLesson] INSERT 실행', { payload });
       ({ error } = await supabase.from('lessons').insert(payload));
     }
 
+    console.log('[AddLesson] 저장 결과', { error });
     setSaving(false);
     if (error) {
       setMsg({ type: 'err', text: error.message });
