@@ -48,8 +48,10 @@ export function useAuth() {
 
   // ── Login ─────────────────────────────────────────────────────
   const login = async ({ name, password }) => {
+    console.log('[useAuth] login 함수 진입', { name, supabaseExists: !!supabase });
     // Dev fallback (no Supabase)
     if (!supabase) {
+      console.log('[useAuth] supabase null → dev fallback');
       const normalized = name.trim().toUpperCase();
       setUser({
         name: normalized,
