@@ -1,18 +1,9 @@
 import { useState } from 'react';
-import { ChevronLeft, Check, Lock } from 'lucide-react';
+import { ChevronLeft, Check } from 'lucide-react';
 import YouTubeEmbed from './YouTubeEmbed';
 import ShadowingSection from './ShadowingSection';
 import OutputSection from './OutputSection';
 import PracticeSection from './PracticeSection';
-
-function LockedSection({ label }) {
-  return (
-    <div className="locked-section">
-      <Lock size={16} />
-      <span>{label}</span>
-    </div>
-  );
-}
 
 export default function LessonPage({ user, lesson, onSubmitAnswer, onSaveSession, stats, onBack }) {
   const [practiceDone, setPracticeDone] = useState(false);
@@ -39,9 +30,6 @@ export default function LessonPage({ user, lesson, onSubmitAnswer, onSaveSession
           <p className="complete-msg">
             {stats.score >= 80 ? '素晴らしい！接客でもすぐ使えます。' : '復習してもう一度試してみてください。'}
           </p>
-          <button type="button" className="primary-action compact" style={{ marginTop: 24 }} onClick={onBack}>
-            ← レッスン一覧へ
-          </button>
         </section>
       </div>
     );
@@ -49,7 +37,6 @@ export default function LessonPage({ user, lesson, onSubmitAnswer, onSaveSession
 
   return (
     <div className="lesson-page">
-      {/* Header */}
       <section className="lesson-hero">
         <div>
           {onBack && (
@@ -59,7 +46,7 @@ export default function LessonPage({ user, lesson, onSubmitAnswer, onSaveSession
           )}
           <p className="eyebrow">{lesson.topicArea}</p>
           <h2>{lesson.lessonTitle}</h2>
-          <p>{user.name} — A → B → C → D の順で進んでください。</p>
+          <p>{user.name} — B → C → D の順で進んでください。</p>
         </div>
         <div className="score-panel">
           <span>Current score</span>
@@ -71,24 +58,32 @@ export default function LessonPage({ user, lesson, onSubmitAnswer, onSaveSession
       {/* A. Video — always visible */}
       <YouTubeEmbed url={lesson.youtubeUrl} timestamp={lesson.youtubeTimestamp} />
 
-      {/* B. Practice — always visible, unlocks C */}
-      <PracticeSection
-        lesson={lesson}
-        onSubmitAnswer={onSubmitAnswer}
-        onAllAnswered={() => setPracticeDone(true)}
-      />
+      {/* B. Practice — visible until complete */}
+      {!practiceDone && (
+        <PracticeSection
+          lesson={lesson}
+          onSubmitAnswer={onSubmitAnswer}
+          onAllAnswered={() => setPracticeDone(true)}
+        />
+      )}
 
-      {/* C. Shadowing — shown only after B */}
+      {/* C. Shadowing — appears only after B, disappears after C */}
       {practiceDone && !shadowingDone && (
-        <ShadowingSection sentences={sentences} onComplete={() => setShadowingDone(true)} />
+        <ShadowingSection
+          sentences={sentences}
+          onComplete={() => setShadowingDone(true)}
+        />
       )}
 
-      {/* D. Output — shown only after C */}
+      {/* D. Output — appears only after C, disappears after D */}
       {shadowingDone && !outputDone && (
-        <OutputSection sentences={sentences} onSubmit={() => setOutputDone(true)} />
+        <OutputSection
+          sentences={sentences}
+          onSubmit={() => setOutputDone(true)}
+        />
       )}
 
-      {/* Complete Lesson — shown only after D */}
+      {/* Complete — appears only after D */}
       {outputDone && (
         <button type="button" className="primary-action complete-btn" onClick={handleComplete}>
           <Check size={18} /> Complete Lesson
