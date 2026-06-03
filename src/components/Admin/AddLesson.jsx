@@ -5,19 +5,26 @@ import { supabase } from '../../utils/supabaseClient';
 const EMPTY_SENTENCE = { text: '', chunks: '', hints: '' };
 
 function parseSentences(rawList) {
-  return rawList.map(({ text, chunks, hints }) => {
-    // chunks: "These pants / go very well / with this knit."
-    const chunkArr = chunks.split('/').map((c) => c.trim()).filter(Boolean);
+  return rawList
+    .filter(({ text }) => text.trim()) // text 있는 것만
+    .map(({ text, chunks, hints }) => {
+      const trimmed = text.trim();
 
-    // hints: "pants:ズボン, knit:ニット"
-    const hintObj = {};
-    hints.split(',').forEach((pair) => {
-      const [k, v] = pair.split(':').map((s) => s.trim());
-      if (k && v) hintObj[k.toLowerCase()] = v;
+      // chunks가 비어있으면 text 전체를 단일 청크로 사용
+      const rawChunks = chunks?.trim();
+      const chunkArr = rawChunks
+        ? rawChunks.split('/').map((c) => c.trim()).filter(Boolean)
+        : [trimmed];
+
+      // hints: "pants:ズボン, knit:ニット"
+      const hintObj = {};
+      (hints || '').split(',').forEach((pair) => {
+        const [k, v] = pair.split(':').map((s) => s.trim());
+        if (k && v) hintObj[k.toLowerCase()] = v;
+      });
+
+      return { text: trimmed, chunks: chunkArr, hints: hintObj };
     });
-
-    return { text: text.trim(), chunks: chunkArr, hints: hintObj };
-  }).filter((s) => s.text && s.chunks.length > 0);
 }
 
 export default function AddLesson({ lessons = [], onRefresh }) {
@@ -51,16 +58,11 @@ export default function AddLesson({ lessons = [], onRefresh }) {
 
     const sentences = parseSentences(rawSentences);
     console.log('[AddLesson] parseSentences 결과', sentences);
-    if (!sentences.length) {
-      setMsg({ type: 'err', text: '文章を1つ以上入力してください。' });
-      setSaving(false);
-      return;
-    }
 
     const payload = {
       lesson_title: title,
       topic_area: topic,
-      youtube_url: youtubeUrl,
+      youtube_url: youtubeUrl || null,
       youtube_timestamp: timestamp || null,
       week_number: parseInt(weekNumber) || 1,
       day_number: parseInt(dayNumber) || 1,
