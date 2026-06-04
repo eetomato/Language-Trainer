@@ -11,6 +11,8 @@ function parseTimestamp(ts) {
 
 export default function YouTubeEmbed({ url, timestamp }) {
   const base = getYouTubeEmbedUrl(url);
+  if (!base) return null; // URL 없으면 섹션 자체 숨김
+
   const seconds = parseTimestamp(timestamp);
   const src = seconds > 0 ? `${base}?start=${seconds}` : base;
 

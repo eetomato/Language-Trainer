@@ -14,15 +14,15 @@ export function formatMinutes(minutes) {
 }
 
 export function getYouTubeEmbedUrl(url) {
-  const fallback = 'https://www.youtube.com/embed/dQw4w9WgXcQ';
+  if (!url) return null;
   try {
     const parsed = new URL(url);
     const videoId =
       parsed.hostname.includes('youtu.be')
         ? parsed.pathname.slice(1)
         : parsed.searchParams.get('v');
-    return videoId ? `https://www.youtube.com/embed/${videoId}` : fallback;
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
   } catch {
-    return fallback;
+    return null;
   }
 }

@@ -84,45 +84,49 @@ function ChunkStage({ sentence, onPass }) {
   );
 }
 
-// ── Stage 2: 2-blank fill / choice ────────────────────────────
-// ── Stage 3: 1-blank fill / choice ────────────────────────────
-function BlankStage({ sentence, blankCount, onPass }) {
-  // Pick `blankCount` random chunks as blanks
+// ── Stage 2: 객관식 빈칸 채우기 (클릭) ───────────────────────
+function ChoiceBlankStage({ sentence, blankCount, stepNum, onPass }) {
   const blanks = useMemo(() => {
     const idx = shuffle([...Array(sentence.chunks.length).keys()]);
-    return new Set(idx.slice(0, blankCount));
+    return idx.slice(0, blankCount); // ordered array of blank indices
   }, [sentence.text, blankCount]);
 
-  const [inputs, setInputs] = useState({});
+  // Options = all chunks shuffled
+  const options = useMemo(() => shuffle(sentence.chunks), [sentence.text]);
+
+  const [filled, setFilled] = useState({}); // { blankIdx: chunkStr }
   const [result, setResult] = useState(null); // null | 'correct' | 'wrong'
 
-  const check = () => {
-    let ok = true;
-    blanks.forEach((i) => {
-      const ans = (inputs[i] || '').trim().toLowerCase();
-      const expected = sentence.chunks[i].toLowerCase().replace(/[.,!?]/g, '');
-      if (ans !== expected) ok = false;
-    });
-    setResult(ok ? 'correct' : 'wrong');
-    if (ok) setTimeout(onPass, 600);
+  const blankSet = useMemo(() => new Set(blanks), [blanks]);
+
+  const handleOption = (chunk) => {
+    if (result === 'correct') return;
+    // Fill next empty blank in order
+    const nextBlank = blanks.find((i) => filled[i] === undefined);
+    if (nextBlank === undefined) return;
+    const next = { ...filled, [nextBlank]: chunk };
+    setFilled(next);
+
+    // Auto-check when all blanks filled
+    if (blanks.every((i) => next[i] !== undefined)) {
+      const ok = blanks.every((i) => next[i] === sentence.chunks[i]);
+      setResult(ok ? 'correct' : 'wrong');
+      if (ok) setTimeout(onPass, 600);
+      else setTimeout(() => { setFilled({}); setResult(null); }, 900);
+    }
   };
 
   return (
     <div className="blank-stage">
-      <p className="stage-label">Step {blankCount === 2 ? 2 : 3} — Fill in the blank{blankCount > 1 ? 's' : ''}</p>
+      <p className="stage-label">Step {stepNum} — Choose the missing chunk{blankCount > 1 ? 's' : ''}</p>
+
+      {/* Sentence with blanks */}
       <div className="blank-sentence">
         {sentence.chunks.map((chunk, i) =>
-          blanks.has(i) ? (
-            <input
-              key={i}
-              type="text"
-              className={`blank-input ${result === 'wrong' ? 'wrong' : ''}`}
-              placeholder="___"
-              value={inputs[i] || ''}
-              onChange={(e) => setInputs((p) => ({ ...p, [i]: e.target.value }))}
-              style={{ width: Math.max(80, chunk.length * 9) }}
-              disabled={result === 'correct'}
-            />
+          blankSet.has(i) ? (
+            <span key={i} className={`blank-box ${filled[i] ? 'filled' : ''} ${result === 'wrong' ? 'wrong' : result === 'correct' ? 'correct' : ''}`}>
+              {filled[i] || '___'}
+            </span>
           ) : (
             <span key={i} className="blank-chunk">
               <HintText text={chunk} hints={sentence.hints} />
@@ -130,21 +134,25 @@ function BlankStage({ sentence, blankCount, onPass }) {
           )
         )}
       </div>
-      {result === 'wrong' && (
-        <p className="blank-feedback wrong">✗ Try again</p>
-      )}
+
+      {/* Choice buttons */}
       {result !== 'correct' && (
-        <button type="button" className="secondary-action" onClick={check}
-          disabled={[...blanks].some((i) => !(inputs[i] || '').trim())}>
-          <Check size={16} /> Check
-        </button>
+        <div className="choice-options">
+          {options.map((c, i) => (
+            <button key={i} type="button" className="chunk-token choice-btn" onClick={() => handleOption(c)}>
+              {c}
+            </button>
+          ))}
+        </div>
       )}
-      {result === 'correct' && (
-        <p className="blank-feedback correct">✓ Correct!</p>
-      )}
+
+      {result === 'wrong' && <p className="blank-feedback wrong">✗ Try again</p>}
+      {result === 'correct' && <p className="blank-feedback correct">✓ Correct!</p>}
     </div>
   );
 }
+
+// ── Stage 3: 1-blank 객관식 (동일 방식) ─────────────────────
 
 // ── One sentence card (3 stages) ─────────────────────────────
 function SentenceCard({ sentence, index, onComplete }) {
@@ -178,10 +186,10 @@ function SentenceCard({ sentence, index, onComplete }) {
         <ChunkStage sentence={sentence} onPass={() => setStage(2)} />
       )}
       {stage === 2 && (
-        <BlankStage sentence={sentence} blankCount={2} onPass={() => setStage(3)} />
+        <ChoiceBlankStage sentence={sentence} blankCount={2} stepNum={2} onPass={() => setStage(3)} />
       )}
       {stage === 3 && (
-        <BlankStage sentence={sentence} blankCount={1} onPass={() => { setStage('done'); onComplete(); }} />
+        <ChoiceBlankStage sentence={sentence} blankCount={1} stepNum={3} onPass={() => { setStage('done'); onComplete(); }} />
       )}
     </div>
   );
