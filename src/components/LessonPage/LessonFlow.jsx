@@ -4,14 +4,18 @@ import LessonPage from './LessonPage';
 import ReviewSection from './ReviewSection';
 import WeeklyTest from './WeeklyTest';
 
+// ✅ 날짜 문자열 (YYYY-MM-DD) 반환
+function toDateStr(isoStr) {
+  return isoStr ? isoStr.slice(0, 10) : null;
+}
+
 export default function LessonFlow({
   user, lessons, latestLesson, lessonsLoading,
   submitAnswer, saveSession, employeeStats,
 }) {
-  const { isLessonDone, isTestDone, markLessonComplete, markTestComplete } = useProgress(user);
+  const { completed, isLessonDone, isTestDone, markLessonComplete, markTestComplete } = useProgress(user);
   const [reviewDone, setReviewDone] = useState(false);
 
-  // Sort lessons by week → day
   const sorted = useMemo(() =>
     [...lessons].sort((a, b) =>
       a.weekNumber !== b.weekNumber ? a.weekNumber - b.weekNumber : a.dayNumber - b.dayNumber
@@ -26,21 +30,34 @@ export default function LessonFlow({
     );
   }
 
-  // First uncompleted non-Day7 lesson; fallback to latest created lesson
+  // ✅ 미완료 레슨 중 첫 번째
   const todayIdx = sorted.findIndex((l) => l.dayNumber !== 7 && !isLessonDone(l.id));
   const todayLesson = sorted[todayIdx] ?? latestLesson ?? null;
-  const yesterdayLesson = todayIdx > 0 ? sorted[todayIdx - 1] : null;
 
-  // Determine if weekly test is pending
+  // ✅ dayNumber 대신 날짜 기반으로 복습 판단
+  const today = toDateStr(new Date().toISOString());
+  const lastCompleted = completed.length > 0
+    ? completed[completed.length - 1]
+    : null;
+  const lastCompletedDate = lastCompleted ? toDateStr(lastCompleted.date) : null;
+  const lastCompletedLesson = lastCompleted
+    ? sorted.find((l) => l.id === lastCompleted.lessonId) ?? null
+    : null;
+
+  // 어제 완료한 레슨이 있고, 오늘 아직 새 레슨을 시작 안 했으면 복습
+  const isReviewDay = lastCompletedDate !== null
+    && lastCompletedDate !== today
+    && !!lastCompletedLesson
+    && !reviewDone;
+
+  // Weekly test
   const currentWeek = todayLesson?.weekNumber
     ?? sorted.filter((l) => l.dayNumber !== 7).at(-1)?.weekNumber
     ?? 1;
-
   const weekDays = sorted.filter((l) => l.weekNumber === currentWeek && l.dayNumber < 7);
   const allWeekDone = weekDays.length > 0 && weekDays.every((l) => isLessonDone(l.id));
   const testPending = allWeekDone && !isTestDone(currentWeek);
 
-  // ── Day 7 weekly test ──────────────────────────────────────
   if (testPending) {
     const weekSentences = weekDays.flatMap((l) => l.sentences || []);
     return (
@@ -48,12 +65,11 @@ export default function LessonFlow({
         user={user}
         weekNumber={currentWeek}
         sentences={weekSentences}
-        onComplete={(wrongSentences) => markTestComplete(currentWeek)}
+        onComplete={() => markTestComplete(currentWeek)}
       />
     );
   }
 
-  // ── All done ───────────────────────────────────────────────
   if (!todayLesson) {
     return (
       <div className="lesson-page">
@@ -66,14 +82,11 @@ export default function LessonFlow({
     );
   }
 
-  const dayNum = todayLesson.dayNumber;
-  const isReviewDay = dayNum >= 2 && dayNum <= 6 && !!yesterdayLesson;
-
-  // ── Review (Day 2-6) ───────────────────────────────────────
-  if (isReviewDay && !reviewDone) {
+  // ── Review ─────────────────────────────────────────────────
+  if (isReviewDay) {
     return (
       <ReviewSection
-        lesson={yesterdayLesson}
+        lesson={lastCompletedLesson}
         user={user}
         onComplete={() => setReviewDone(true)}
       />

@@ -4,6 +4,17 @@ import { ChevronRight, Check } from 'lucide-react';
 // ── Word hint popup ────────────────────────────────────────────
 function HintText({ text, hints = {} }) {
   const [open, setOpen] = useState(null);
+
+  // ✅ TTS
+  const speak = (word) => {
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(word);
+    utter.lang = 'en-US';
+    utter.rate = 0.9;
+    window.speechSynthesis.speak(utter);
+  };
+
   const words = text.split(/(\s+)/);
   return (
     <span>
@@ -12,7 +23,14 @@ function HintText({ text, hints = {} }) {
         const hint = hints[key] || hints[word];
         if (hint) {
           return (
-            <span key={i} className="hint-word" onClick={() => setOpen(open === i ? null : i)}>
+            <span
+              key={i}
+              className="hint-word"
+              onClick={() => {
+                speak(word.replace(/[.,!?。、]/g, ''));
+                setOpen(open === i ? null : i);
+              }}
+            >
               {word}
               {open === i && <span className="hint-popup">{hint}</span>}
             </span>

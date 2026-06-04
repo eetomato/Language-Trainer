@@ -5,12 +5,23 @@ import ShadowingSection from './ShadowingSection';
 import OutputSection from './OutputSection';
 import PracticeSection from './PracticeSection';
 
-// step: 'B' | 'C' | 'D' | 'done'
 export default function LessonPage({ user, lesson, onSubmitAnswer, onSaveSession, stats, onBack }) {
   const [step, setStep] = useState('B');
   const [lessonComplete, setLessonComplete] = useState(false);
 
+  // ✅ 로컬 score 카운터 — stats prop 의존 제거
+  const [localCorrect, setLocalCorrect] = useState(0);
+  const [localTotal, setLocalTotal] = useState(0);
+
   const sentences = lesson.sentences || [];
+
+  const handleSubmitAnswer = (result) => {
+    setLocalTotal((t) => t + 1);
+    if (result.isCorrect) setLocalCorrect((c) => c + 1);
+    onSubmitAnswer?.(result);
+  };
+
+  const localScore = localTotal > 0 ? Math.round((localCorrect / localTotal) * 100) : 0;
 
   const handleComplete = () => {
     setLessonComplete(true);
@@ -23,11 +34,11 @@ export default function LessonPage({ user, lesson, onSubmitAnswer, onSaveSession
         <section className="lesson-section complete-section">
           <p className="eyebrow">Lesson Complete</p>
           <div className="complete-score">
-            <strong>{stats.score}%</strong>
-            <p>{stats.completed} attempts saved</p>
+            <strong>{localScore}%</strong>
+            <p>{localTotal} attempts saved</p>
           </div>
           <p className="complete-msg">
-            {stats.score >= 80 ? 'Great work! Ready to use on the floor.' : 'Review and try again.'}
+            {localScore >= 80 ? 'Great work! Ready to use on the floor.' : 'Review and try again.'}
           </p>
         </section>
       </div>
@@ -49,8 +60,8 @@ export default function LessonPage({ user, lesson, onSubmitAnswer, onSaveSession
         </div>
         <div className="score-panel">
           <span>Current score</span>
-          <strong>{stats.score}%</strong>
-          <small>{stats.completed} attempts</small>
+          <strong>{localScore}%</strong>
+          <small>{localTotal} attempts</small>
         </div>
       </section>
 
@@ -61,7 +72,7 @@ export default function LessonPage({ user, lesson, onSubmitAnswer, onSaveSession
       {step === 'B' && (
         <PracticeSection
           lesson={lesson}
-          onSubmitAnswer={onSubmitAnswer}
+          onSubmitAnswer={handleSubmitAnswer}
           onAllAnswered={() => setStep('C')}
         />
       )}

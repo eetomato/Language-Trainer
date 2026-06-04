@@ -17,10 +17,18 @@ export function getYouTubeEmbedUrl(url) {
   if (!url) return null;
   try {
     const parsed = new URL(url);
-    const videoId =
-      parsed.hostname.includes('youtu.be')
-        ? parsed.pathname.slice(1)
-        : parsed.searchParams.get('v');
+    let videoId = null;
+
+    if (parsed.hostname.includes('youtu.be')) {
+      videoId = parsed.pathname.slice(1);
+    } else if (parsed.pathname.includes('/shorts/')) {
+      // youtube.com/shorts/ID
+      videoId = parsed.pathname.split('/shorts/')[1]?.split('/')[0];
+    } else {
+      // youtube.com/watch?v=ID
+      videoId = parsed.searchParams.get('v');
+    }
+
     return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
   } catch {
     return null;
