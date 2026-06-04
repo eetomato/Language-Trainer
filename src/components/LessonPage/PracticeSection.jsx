@@ -88,7 +88,7 @@ function ChunkStage({ sentence, onPass }) {
 function ChoiceBlankStage({ sentence, blankCount, stepNum, onPass }) {
   const blanks = useMemo(() => {
     const idx = shuffle([...Array(sentence.chunks.length).keys()]);
-    return idx.slice(0, blankCount); // ordered array of blank indices
+    return idx.slice(0, blankCount).sort((a, b) => a - b); // 왼→오 순서 보장
   }, [sentence.text, blankCount]);
 
   // Options = all chunks shuffled
