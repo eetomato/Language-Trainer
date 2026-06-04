@@ -61,12 +61,12 @@ export default function ShadowingSection({ sentences, onComplete }) {
 
       {/* Sentence card */}
       <div className="shadow-card">
-        <p className="shadow-sentence">{sentence?.english}</p>
+        <p className="shadow-sentence">{sentence?.text || sentence?.english}</p>
         <p className="shadow-jp">{sentence?.japanese}</p>
         <button
           type="button"
           className="tts-btn"
-          onClick={() => speak(sentence?.english || '')}
+          onClick={() => speak(sentence?.text || sentence?.english || '')}
           aria-label="Play audio"
         >
           <Volume2 size={18} /> Listen
