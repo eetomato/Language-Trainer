@@ -85,7 +85,7 @@ function ChunkStage({ sentence, onPass }) {
 }
 
 // ── Stage 2: 객관식 빈칸 채우기 (클릭) ───────────────────────
-function ChoiceBlankStage({ sentence, blankCount, stepNum, onPass }) {
+function ChoiceBlankStage({ sentence, blankCount, stepNum, onPass, onSubmitAnswer }) {
   const blanks = useMemo(() => {
     const idx = shuffle([...Array(sentence.chunks.length).keys()]);
     return idx.slice(0, blankCount).sort((a, b) => a - b); // 왼→오 순서 보장
@@ -111,6 +111,11 @@ function ChoiceBlankStage({ sentence, blankCount, stepNum, onPass }) {
     if (blanks.every((i) => next[i] !== undefined)) {
       const ok = blanks.every((i) => next[i] === sentence.chunks[i]);
       setResult(ok ? 'correct' : 'wrong');
+      onSubmitAnswer?.({
+        question: { id: sentence.text, lessonId: sentence.lessonId || '', questionType: 'chunk', blankAnswer: sentence.text },
+        userAnswer: blanks.map((i) => next[i]).join(' / '),
+        isCorrect: ok,
+      });
       if (ok) setTimeout(onPass, 600);
       else setTimeout(() => { setFilled({}); setResult(null); }, 900);
     }
@@ -155,7 +160,7 @@ function ChoiceBlankStage({ sentence, blankCount, stepNum, onPass }) {
 // ── Stage 3: 1-blank 객관식 (동일 방식) ─────────────────────
 
 // ── One sentence card (3 stages) ─────────────────────────────
-function SentenceCard({ sentence, index, onComplete }) {
+function SentenceCard({ sentence, index, onComplete, onSubmitAnswer }) {
   const [stage, setStage] = useState(1); // 1, 2, 3, 'done'
 
   if (stage === 'done') {
@@ -186,10 +191,10 @@ function SentenceCard({ sentence, index, onComplete }) {
         <ChunkStage sentence={sentence} onPass={() => setStage(2)} />
       )}
       {stage === 2 && (
-        <ChoiceBlankStage sentence={sentence} blankCount={2} stepNum={2} onPass={() => setStage(3)} />
+        <ChoiceBlankStage sentence={sentence} blankCount={2} stepNum={2} onPass={() => setStage(3)} onSubmitAnswer={onSubmitAnswer} />
       )}
       {stage === 3 && (
-        <ChoiceBlankStage sentence={sentence} blankCount={1} stepNum={3} onPass={() => { setStage('done'); onComplete(); }} />
+        <ChoiceBlankStage sentence={sentence} blankCount={1} stepNum={3} onPass={() => { setStage('done'); onComplete(); }} onSubmitAnswer={onSubmitAnswer} />
       )}
     </div>
   );
@@ -237,6 +242,7 @@ export default function PracticeSection({ lesson, onSubmitAnswer, onAllAnswered 
               sentence={sentence}
               index={i}
               onComplete={() => handleSentenceComplete(i)}
+              onSubmitAnswer={onSubmitAnswer}
             />
           ) : (
             <div key={i} className="sentence-card locked-card">

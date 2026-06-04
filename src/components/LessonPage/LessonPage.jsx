@@ -27,7 +27,7 @@ export default function LessonPage({ user, lesson, onSubmitAnswer, onSaveSession
             <p>{stats.completed} attempts saved</p>
           </div>
           <p className="complete-msg">
-            {stats.score >= 80 ? '素晴らしい！接客でもすぐ使えます。' : '復習してもう一度試してみてください。'}
+            {stats.score >= 80 ? 'Great work! Ready to use on the floor.' : 'Review and try again.'}
           </p>
         </section>
       </div>
