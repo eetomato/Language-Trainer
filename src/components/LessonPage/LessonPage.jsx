@@ -89,13 +89,13 @@ export default function LessonPage({ user, lesson, onSubmitAnswer, onSaveSession
             <Check size={18} /> Complete Lesson
           </button>
           <div className="retry-buttons">
-            <p className="retry-label">다시 학습하기</p>
+            <p className="retry-label">Retry</p>
             <div className="retry-row">
               <button type="button" className="retry-btn" onClick={() => setStep('B')}>
-                <RotateCcw size={15} /> B. Practice 다시
+                <RotateCcw size={15} /> B. Practice again
               </button>
               <button type="button" className="retry-btn" onClick={() => setStep('C')}>
-                <RotateCcw size={15} /> C. Shadowing 다시
+                <RotateCcw size={15} /> C. Shadowing again
               </button>
             </div>
           </div>
