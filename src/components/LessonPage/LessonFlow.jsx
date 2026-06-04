@@ -5,7 +5,7 @@ import ReviewSection from './ReviewSection';
 import WeeklyTest from './WeeklyTest';
 
 export default function LessonFlow({
-  user, lessons, lessonsLoading,
+  user, lessons, latestLesson, lessonsLoading,
   submitAnswer, saveSession, employeeStats,
 }) {
   const { isLessonDone, isTestDone, markLessonComplete, markTestComplete } = useProgress(user);
@@ -26,9 +26,9 @@ export default function LessonFlow({
     );
   }
 
-  // First uncompleted non-Day7 lesson
+  // First uncompleted non-Day7 lesson; fallback to latest created lesson
   const todayIdx = sorted.findIndex((l) => l.dayNumber !== 7 && !isLessonDone(l.id));
-  const todayLesson = sorted[todayIdx] ?? null;
+  const todayLesson = sorted[todayIdx] ?? latestLesson ?? null;
   const yesterdayLesson = todayIdx > 0 ? sorted[todayIdx - 1] : null;
 
   // Determine if weekly test is pending

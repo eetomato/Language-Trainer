@@ -14,7 +14,7 @@ import '../App.css';
 export default function App() {
   const { user, logout, loading } = useAuth();
   const { submitAnswer, saveSession, resetProgress } = useLesson(user);
-  const { lessons, loading: lessonsLoading, refresh: refreshLessons } = useLessons();
+  const { lessons, latestLesson, loading: lessonsLoading, refresh: refreshLessons } = useLessons();
   const { employeeStats, managerStats } = useDashboard(user);
   const [view, setView] = useState('dashboard');
 
@@ -63,6 +63,7 @@ export default function App() {
         <LessonFlow
           user={user}
           lessons={lessons}
+          latestLesson={latestLesson}
           lessonsLoading={lessonsLoading}
           submitAnswer={submitAnswer}
           saveSession={saveSession}

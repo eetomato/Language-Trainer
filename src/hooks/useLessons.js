@@ -21,41 +21,56 @@ function mapLesson(row) {
 
 export function useLessons() {
   const [lessons, setLessons] = useState([]);
+  const [latestLesson, setLatestLesson] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const fetch = useCallback(() => {
+  const fetch = useCallback(async () => {
     if (!supabase) {
       console.warn('[useLessons] Supabase 미연결 → defaultLesson 사용');
       setLessons([defaultLesson]);
+      setLatestLesson(defaultLesson);
       setLoading(false);
       return;
     }
     setLoading(true);
-    supabase
-      .from('lessons')
-      .select('*')
-      .order('week_number', { ascending: true })
-      .order('day_number', { ascending: true })
-      .then(({ data, error }) => {
-        if (error) {
-          console.error('[useLessons] Supabase 오류 → defaultLesson 사용', error);
-          setLessons([defaultLesson]);
-        } else if (!data?.length) {
-          console.warn('[useLessons] 레슨 없음 → defaultLesson 사용');
-          setLessons([defaultLesson]);
-        } else {
-          console.log(`[useLessons] ${data.length}개 레슨 로드 완료`);
-          setLessons(data.map(mapLesson));
-        }
-      })
-      .catch((e) => {
-        console.error('[useLessons] fetch 실패', e);
+    try {
+      // week/day 순 전체 레슨
+      const { data, error } = await supabase
+        .from('lessons')
+        .select('*')
+        .order('week_number', { ascending: true })
+        .order('day_number', { ascending: true });
+
+      if (error) throw error;
+
+      if (!data?.length) {
+        console.warn('[useLessons] 레슨 없음 → defaultLesson 사용');
         setLessons([defaultLesson]);
-      })
-      .finally(() => setLoading(false));
+        setLatestLesson(defaultLesson);
+      } else {
+        console.log(`[useLessons] ${data.length}개 레슨 로드 완료`);
+        const mapped = data.map(mapLesson);
+        setLessons(mapped);
+
+        // created_at 기준 최신 레슨 별도 저장
+        const { data: latest } = await supabase
+          .from('lessons')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+        setLatestLesson(latest ? mapLesson(latest) : mapped.at(-1));
+      }
+    } catch (e) {
+      console.error('[useLessons] fetch 실패', e);
+      setLessons([defaultLesson]);
+      setLatestLesson(defaultLesson);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => { fetch(); }, [fetch]);
 
-  return { lessons, loading, refresh: fetch };
+  return { lessons, latestLesson, loading, refresh: fetch };
 }
