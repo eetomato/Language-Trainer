@@ -10,7 +10,6 @@ export function useDashboard(user) {
   const [localSessions, setLocalSessions] = useState([]);
   const [managerData, setManagerData] = useState({ employees: [], mistakes: [], stores: [] });
 
-  // ── Employee data from localStorage ───────────────────────────
   useEffect(() => {
     const load = () => {
       const results = localStorage.getItem(RESULTS_KEY);
@@ -27,14 +26,17 @@ export function useDashboard(user) {
     };
   }, []);
 
-  // ── Manager data from Supabase ─────────────────────────────────
   const loadManagerData = useCallback(async () => {
     if (!supabase || user?.role !== 'manager') return;
     try {
       const [{ data: employees }, { data: mistakes }, { data: stores }] = await Promise.all([
         supabase
           .from('employees')
-          .select('id, name, store_name, role, results(is_correct, attempted_date)')
+          .select(`
+            id, name, store_name, role,
+            results(is_correct, attempted_date),
+            sessions(study_minutes, date)
+          `)
           .order('name'),
         supabase
           .from('mistakes')
