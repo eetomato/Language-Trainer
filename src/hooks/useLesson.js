@@ -12,7 +12,6 @@ export function useLesson(user) {
     if (saved) setResults(JSON.parse(saved));
   }, []);
 
-  // ── Save answer result ─────────────────────────────────────────
   const submitAnswer = async ({ question, userAnswer, isCorrect }) => {
     const result = {
       id: crypto.randomUUID(),
@@ -31,7 +30,7 @@ export function useLesson(user) {
     setResults(next);
     localStorage.setItem(RESULTS_KEY, JSON.stringify(next));
 
-    // Save to Supabase if connected
+    // Supabase 저장 — question_id는 null (practice_questions FK 제약)
     if (supabase) {
       try {
         const { data: employee } = await supabase
@@ -40,19 +39,29 @@ export function useLesson(user) {
           .eq('name', user.name)
           .maybeSingle();
 
-        await supabase.from('results').insert({
+        // lesson_id: 유효한 UUID인지 확인 후 삽입
+        const lessonId = question.lessonId && question.lessonId.match(
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+        ) ? question.lessonId : null;
+
+        const { error } = await supabase.from('results').insert({
           employee_id: employee?.id ?? null,
+          lesson_id: lessonId,
+          question_id: null,           // ✅ FK 제약으로 null 처리
           user_answer: userAnswer,
           is_correct: isCorrect,
           time_spent_seconds: 0,
         });
-      } catch (_) {}
+
+        if (error) console.warn('[useLesson] Supabase 저장 실패', error.message);
+      } catch (e) {
+        console.warn('[useLesson] Supabase 예외', e.message);
+      }
     }
 
     return result;
   };
 
-  // ── Save actual study session (called on Complete Lesson) ──────
   const saveSession = ({ lessonId, studyMinutes }) => {
     const sessions = JSON.parse(localStorage.getItem(SESSIONS_KEY) || '[]');
     sessions.push({
@@ -65,13 +74,11 @@ export function useLesson(user) {
     localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
   };
 
-  // ── Reset personal progress ────────────────────────────────────
   const resetProgress = () => {
     const nextResults = results.filter((r) => r.employeeName !== user?.name);
     setResults(nextResults);
     localStorage.setItem(RESULTS_KEY, JSON.stringify(nextResults));
 
-    // Also clear sessions for this user
     const sessions = JSON.parse(localStorage.getItem(SESSIONS_KEY) || '[]');
     const nextSessions = sessions.filter((s) => s.employeeName !== user?.name);
     localStorage.setItem(SESSIONS_KEY, JSON.stringify(nextSessions));
