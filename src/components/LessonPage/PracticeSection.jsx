@@ -1,11 +1,10 @@
 import { useState, useMemo } from 'react';
 import { ChevronRight, Check } from 'lucide-react';
 
-// ── Word hint popup ────────────────────────────────────────────
+// ── Word hint popup + TTS ──────────────────────────────────────
 function HintText({ text, hints = {} }) {
   const [open, setOpen] = useState(null);
 
-  // ✅ TTS
   const speak = (word) => {
     if (!window.speechSynthesis) return;
     window.speechSynthesis.cancel();
@@ -42,12 +41,12 @@ function HintText({ text, hints = {} }) {
   );
 }
 
-// ── Shuffle array ─────────────────────────────────────────────
+// ── Shuffle ───────────────────────────────────────────────────
 function shuffle(arr) {
   return [...arr].sort(() => Math.random() - 0.5);
 }
 
-// ── Stage 1: chunk ordering (drag & click) ────────────────────
+// ── Stage 1: 청크 순서 맞추기 ────────────────────────────────
 function ChunkStage({ sentence, onPass }) {
   const shuffled = useMemo(() => shuffle(sentence.chunks), [sentence.text]);
   const [selected, setSelected] = useState([]);
@@ -55,6 +54,7 @@ function ChunkStage({ sentence, onPass }) {
 
   const remaining = shuffled.filter((c) => !selected.includes(c));
 
+  // ✅ 개별 제거 가능 — 틀려도 전체 초기화 없음
   const add = (chunk) => setSelected((p) => [...p, chunk]);
   const remove = (i) => setSelected((p) => p.filter((_, j) => j !== i));
 
@@ -65,7 +65,7 @@ function ChunkStage({ sentence, onPass }) {
       onPass();
     } else {
       setWrong(true);
-      setTimeout(() => { setSelected([]); setWrong(false); }, 800);
+      setTimeout(() => setWrong(false), 600); // ✅ 흔들림만, 초기화 없음
     }
   };
 
@@ -73,7 +73,6 @@ function ChunkStage({ sentence, onPass }) {
     <div className="chunk-stage">
       <p className="stage-label">Step 1 — Put the chunks in order</p>
 
-      {/* Answer area */}
       <div className={`chunk-answer ${wrong ? 'shake' : ''}`}>
         {selected.length === 0
           ? <span className="chunk-placeholder">Tap chunks below ↓</span>
@@ -84,7 +83,6 @@ function ChunkStage({ sentence, onPass }) {
           ))}
       </div>
 
-      {/* Remaining chunks */}
       <div className="chunk-pool">
         {remaining.map((c, i) => (
           <button key={i} type="button" className="chunk-token" onClick={() => add(c)}>
@@ -102,30 +100,25 @@ function ChunkStage({ sentence, onPass }) {
   );
 }
 
-// ── Stage 2: 객관식 빈칸 채우기 (클릭) ───────────────────────
+// ── Stage 2/3: 객관식 빈칸 ───────────────────────────────────
 function ChoiceBlankStage({ sentence, blankCount, stepNum, onPass, onSubmitAnswer }) {
   const blanks = useMemo(() => {
     const idx = shuffle([...Array(sentence.chunks.length).keys()]);
-    return idx.slice(0, blankCount).sort((a, b) => a - b); // 왼→오 순서 보장
+    return idx.slice(0, blankCount).sort((a, b) => a - b);
   }, [sentence.text, blankCount]);
 
-  // Options = all chunks shuffled
   const options = useMemo(() => shuffle(sentence.chunks), [sentence.text]);
-
-  const [filled, setFilled] = useState({}); // { blankIdx: chunkStr }
-  const [result, setResult] = useState(null); // null | 'correct' | 'wrong'
-
+  const [filled, setFilled] = useState({});
+  const [result, setResult] = useState(null);
   const blankSet = useMemo(() => new Set(blanks), [blanks]);
 
   const handleOption = (chunk) => {
     if (result === 'correct') return;
-    // Fill next empty blank in order
     const nextBlank = blanks.find((i) => filled[i] === undefined);
     if (nextBlank === undefined) return;
     const next = { ...filled, [nextBlank]: chunk };
     setFilled(next);
 
-    // Auto-check when all blanks filled
     if (blanks.every((i) => next[i] !== undefined)) {
       const ok = blanks.every((i) => next[i] === sentence.chunks[i]);
       setResult(ok ? 'correct' : 'wrong');
@@ -142,8 +135,6 @@ function ChoiceBlankStage({ sentence, blankCount, stepNum, onPass, onSubmitAnswe
   return (
     <div className="blank-stage">
       <p className="stage-label">Step {stepNum} — Choose the missing chunk{blankCount > 1 ? 's' : ''}</p>
-
-      {/* Sentence with blanks */}
       <div className="blank-sentence">
         {sentence.chunks.map((chunk, i) =>
           blankSet.has(i) ? (
@@ -157,8 +148,6 @@ function ChoiceBlankStage({ sentence, blankCount, stepNum, onPass, onSubmitAnswe
           )
         )}
       </div>
-
-      {/* Choice buttons */}
       {result !== 'correct' && (
         <div className="choice-options">
           {options.map((c, i) => (
@@ -168,20 +157,19 @@ function ChoiceBlankStage({ sentence, blankCount, stepNum, onPass, onSubmitAnswe
           ))}
         </div>
       )}
-
       {result === 'wrong' && <p className="blank-feedback wrong">✗ Try again</p>}
       {result === 'correct' && <p className="blank-feedback correct">✓ Correct!</p>}
     </div>
   );
 }
 
-// ── Stage 3: 1-blank 객관식 (동일 방식) ─────────────────────
-
-// ── One sentence card (3 stages) ─────────────────────────────
+// ── 한 문장 카드 ──────────────────────────────────────────────
 function SentenceCard({ sentence, index, onComplete, onSubmitAnswer }) {
-  const [stage, setStage] = useState(1); // 1, 2, 3, 'done'
+  // phase: 'preview' → 문장 노출 / 'practice' → 문제 풀기 / 'done'
+  const [phase, setPhase] = useState('preview');
+  const [stage, setStage] = useState(1);
 
-  if (stage === 'done') {
+  if (phase === 'done') {
     return (
       <div className="sentence-card done-card">
         <Check size={18} />
@@ -190,6 +178,28 @@ function SentenceCard({ sentence, index, onComplete, onSubmitAnswer }) {
     );
   }
 
+  if (phase === 'preview') {
+    return (
+      <div className="sentence-card">
+        <div className="sentence-card-header">
+          <span className="sentence-num">Sentence {index + 1}</span>
+        </div>
+        {/* ✅ 문장 전체 노출 — 문제 전 미리 읽기 */}
+        <p className="sentence-full">
+          <HintText text={sentence.text} hints={sentence.hints} />
+        </p>
+        <button
+          type="button"
+          className="primary-action compact"
+          onClick={() => setPhase('practice')}
+        >
+          Start Practice <ChevronRight size={16} />
+        </button>
+      </div>
+    );
+  }
+
+  // phase === 'practice'
   return (
     <div className="sentence-card">
       <div className="sentence-card-header">
@@ -201,18 +211,28 @@ function SentenceCard({ sentence, index, onComplete, onSubmitAnswer }) {
         </span>
       </div>
 
-      <p className="sentence-full">
-        <HintText text={sentence.text} hints={sentence.hints} />
-      </p>
+      {/* ✅ 문제 풀 때는 문장 숨김 */}
 
       {stage === 1 && (
         <ChunkStage sentence={sentence} onPass={() => setStage(2)} />
       )}
       {stage === 2 && (
-        <ChoiceBlankStage sentence={sentence} blankCount={2} stepNum={2} onPass={() => setStage(3)} onSubmitAnswer={onSubmitAnswer} />
+        <ChoiceBlankStage
+          sentence={sentence}
+          blankCount={2}
+          stepNum={2}
+          onPass={() => setStage(3)}
+          onSubmitAnswer={onSubmitAnswer}
+        />
       )}
       {stage === 3 && (
-        <ChoiceBlankStage sentence={sentence} blankCount={1} stepNum={3} onPass={() => { setStage('done'); onComplete(); }} onSubmitAnswer={onSubmitAnswer} />
+        <ChoiceBlankStage
+          sentence={sentence}
+          blankCount={1}
+          stepNum={3}
+          onPass={() => { setPhase('done'); onComplete(); }}
+          onSubmitAnswer={onSubmitAnswer}
+        />
       )}
     </div>
   );
@@ -221,7 +241,7 @@ function SentenceCard({ sentence, index, onComplete, onSubmitAnswer }) {
 // ── Main PracticeSection ──────────────────────────────────────
 export default function PracticeSection({ lesson, onSubmitAnswer, onAllAnswered }) {
   const sentences = lesson.sentences || [];
-  const [cleared, setCleared] = useState(0); // how many sentences fully cleared
+  const [cleared, setCleared] = useState(0);
 
   const handleSentenceComplete = (idx) => {
     if (idx === cleared) {
@@ -251,9 +271,8 @@ export default function PracticeSection({ lesson, onSubmitAnswer, onAllAnswered 
         <p className="eyebrow">B. Practice</p>
         <h2>Use it now</h2>
       </div>
-
       <div className="sentence-cards">
-        {sentences.map((sentence, i) => (
+        {sentences.map((sentence, i) =>
           i <= cleared ? (
             <SentenceCard
               key={i}
@@ -268,7 +287,7 @@ export default function PracticeSection({ lesson, onSubmitAnswer, onAllAnswered 
               <span>Sentence {i + 1} — Complete previous sentence first</span>
             </div>
           )
-        ))}
+        )}
       </div>
     </section>
   );
