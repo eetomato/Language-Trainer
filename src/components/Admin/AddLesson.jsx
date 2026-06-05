@@ -2,33 +2,36 @@ import { useState } from 'react';
 import { Save, Plus, Trash2 } from 'lucide-react';
 import { supabase } from '../../utils/supabaseClient';
 
-const EMPTY_SENTENCE = { text: '', chunks: '', hints: '' };
+const EMPTY_SENTENCE = { text: '', chunks: '', hints: '', translation: '', pattern: '' };
 
 function parseSentences(rawList) {
   return rawList
-    .filter(({ text }) => text.trim()) // text 있는 것만
-    .map(({ text, chunks, hints }) => {
+    .filter(({ text }) => text.trim())
+    .map(({ text, chunks, hints, translation, pattern }) => {
       const trimmed = text.trim();
-
-      // chunks가 비어있으면 text 전체를 단일 청크로 사용
       const rawChunks = chunks?.trim();
       const chunkArr = rawChunks
         ? rawChunks.split('/').map((c) => c.trim()).filter(Boolean)
         : [trimmed];
 
-      // hints: "pants:ズボン, knit:ニット"
       const hintObj = {};
       (hints || '').split(',').forEach((pair) => {
         const [k, v] = pair.split(':').map((s) => s.trim());
         if (k && v) hintObj[k.toLowerCase()] = v;
       });
 
-      return { text: trimmed, chunks: chunkArr, hints: hintObj };
+      return {
+        text: trimmed,
+        chunks: chunkArr,
+        hints: hintObj,
+        translation: translation?.trim() || '',
+        pattern: pattern?.trim() || '',
+      };
     });
 }
 
 export default function AddLesson({ lessons = [], onRefresh }) {
-  const [lessonId, setLessonId] = useState(''); // '' = 新規INSERT
+  const [lessonId, setLessonId] = useState('');
   const [title, setTitle] = useState('');
   const [topic, setTopic] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
@@ -44,31 +47,23 @@ export default function AddLesson({ lessons = [], onRefresh }) {
   const [msg, setMsg] = useState(null);
 
   const resetForm = () => {
-    setTitle('');
-    setTopic('');
-    setYoutubeUrl('');
-    setTimestamp('');
-    setWeekNumber(1);
-    setDayNumber(1);
+    setTitle(''); setTopic(''); setYoutubeUrl(''); setTimestamp('');
+    setWeekNumber(1); setDayNumber(1);
     setRawSentences([{ ...EMPTY_SENTENCE }, { ...EMPTY_SENTENCE }, { ...EMPTY_SENTENCE }]);
   };
 
-  const updateSentence = (i, field, value) => {
+  const updateSentence = (i, field, value) =>
     setRawSentences((prev) => prev.map((s, j) => j === i ? { ...s, [field]: value } : s));
-  };
 
   const addSentence = () => setRawSentences((p) => [...p, { ...EMPTY_SENTENCE }]);
   const removeSentence = (i) => setRawSentences((p) => p.filter((_, j) => j !== i));
 
   const handleSave = async (e) => {
     e.preventDefault();
-    console.log('[AddLesson] 저장 버튼 클릭', { supabaseExists: !!supabase, lessonId, title, youtubeUrl });
     if (!supabase) { setMsg({ type: 'err', text: 'Supabase not connected.' }); return; }
     setSaving(true);
 
     const sentences = parseSentences(rawSentences);
-    console.log('[AddLesson] parseSentences 결과', sentences);
-
     const payload = {
       lesson_title: title,
       topic_area: topic,
@@ -78,33 +73,23 @@ export default function AddLesson({ lessons = [], onRefresh }) {
       day_number: parseInt(dayNumber) || 1,
       sentences,
       vocabulary_json: [],
-      example_sentences: sentences.map((s) => ({ japanese: '', english: s.text })),
+      example_sentences: sentences.map((s) => ({ japanese: s.translation, english: s.text })),
       difficulty_level: 'beginner',
     };
 
-    // lessonId는 상태값(string)이므로 truthy 체크로 UPDATE/INSERT 분기
     let error;
     if (lessonId) {
-      console.log('[AddLesson] UPDATE 실행', { lessonId });
       ({ error } = await supabase.from('lessons').update(payload).eq('id', lessonId));
     } else {
-      console.log('[AddLesson] INSERT 실행', { payload });
-      // id는 payload에 포함하지 않음 — Supabase가 자동 생성
       ({ error } = await supabase.from('lessons').insert(payload).select());
     }
 
-    console.log('[AddLesson] 저장 결과', { error });
     setSaving(false);
-
     if (error) {
       setMsg({ type: 'err', text: error.message });
     } else {
-      // msg 먼저 표시 → 500ms 후 폼 초기화 + 목록 갱신
       setMsg({ type: 'ok', text: '저장 완료!' });
-      setTimeout(() => {
-        resetForm();
-        onRefresh?.();
-      }, 500);
+      setTimeout(() => { resetForm(); onRefresh?.(); }, 500);
     }
   };
 
@@ -122,9 +107,6 @@ export default function AddLesson({ lessons = [], onRefresh }) {
       )}
 
       <form className="admin-form lesson-form" onSubmit={handleSave}>
-
-        {/* Basic info */}
-        {/* Week / Day */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <div>
             <label>Week</label>
@@ -144,24 +126,13 @@ export default function AddLesson({ lessons = [], onRefresh }) {
         <label>トピック</label>
         <input value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="Menswear fit" />
 
-        {/* YouTube */}
         <label>YouTube URL</label>
-        <input
-          value={youtubeUrl}
-          onChange={(e) => setYoutubeUrl(e.target.value)}
-          placeholder="https://www.youtube.com/watch?v=..."
-        />
-        <label>
-          タイムスタンプ <span style={{ fontWeight: 400, color: '#999' }}>(例: 1:23)</span>
-        </label>
-        <input
-          value={timestamp}
-          onChange={(e) => setTimestamp(e.target.value)}
-          placeholder="0:00"
-          style={{ maxWidth: 120 }}
-        />
+        <input value={youtubeUrl} onChange={(e) => setYoutubeUrl(e.target.value)}
+          placeholder="https://www.youtube.com/watch?v=..." />
+        <label>タイムスタンプ <span style={{ fontWeight: 400, color: '#999' }}>(例: 1:23)</span></label>
+        <input value={timestamp} onChange={(e) => setTimestamp(e.target.value)}
+          placeholder="0:00" style={{ maxWidth: 120 }} />
 
-        {/* Sentences */}
         <div className="lesson-sentences-header">
           <strong>文章 ({rawSentences.length})</strong>
           <button type="button" className="icon-btn" onClick={addSentence} title="文章を追加">
@@ -181,29 +152,24 @@ export default function AddLesson({ lessons = [], onRefresh }) {
             </div>
 
             <label>英文</label>
-            <input
-              value={s.text}
-              onChange={(e) => updateSentence(i, 'text', e.target.value)}
-              placeholder="These pants go very well with this knit."
-            />
+            <input value={s.text} onChange={(e) => updateSentence(i, 'text', e.target.value)}
+              placeholder="These pants go very well with this knit." />
 
-            <label>
-              チャンク <span style={{ fontWeight: 400, color: '#999' }}>( / で区切る)</span>
-            </label>
-            <input
-              value={s.chunks}
-              onChange={(e) => updateSentence(i, 'chunks', e.target.value)}
-              placeholder="These pants / go very well / with this knit."
-            />
+            <label>チャンク <span style={{ fontWeight: 400, color: '#999' }}>( / で区切る)</span></label>
+            <input value={s.chunks} onChange={(e) => updateSentence(i, 'chunks', e.target.value)}
+              placeholder="These pants / go very well / with this knit." />
 
-            <label>
-              ヒント <span style={{ fontWeight: 400, color: '#999' }}>(単語:意味, 単語:意味)</span>
-            </label>
-            <input
-              value={s.hints}
-              onChange={(e) => updateSentence(i, 'hints', e.target.value)}
-              placeholder="pants:ズボン, knit:ニット"
-            />
+            <label>ヒント <span style={{ fontWeight: 400, color: '#999' }}>(単語:意味, 単語:意味)</span></label>
+            <input value={s.hints} onChange={(e) => updateSentence(i, 'hints', e.target.value)}
+              placeholder="pants:ズボン, knit:ニット" />
+
+            <label>日本語訳</label>
+            <input value={s.translation} onChange={(e) => updateSentence(i, 'translation', e.target.value)}
+              placeholder="このパンツはこのニットにとてもよく合います。" />
+
+            <label>パターン <span style={{ fontWeight: 400, color: '#999' }}>(文法・表現のポイント)</span></label>
+            <input value={s.pattern} onChange={(e) => updateSentence(i, 'pattern', e.target.value)}
+              placeholder="go well with ～：〜に合う" />
           </div>
         ))}
 

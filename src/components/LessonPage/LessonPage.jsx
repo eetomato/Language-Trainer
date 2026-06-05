@@ -1,19 +1,42 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronLeft, Check, RotateCcw } from 'lucide-react';
 import YouTubeEmbed from './YouTubeEmbed';
 import ShadowingSection from './ShadowingSection';
 import OutputSection from './OutputSection';
 import PracticeSection from './PracticeSection';
 
-export default function LessonPage({ user, lesson, onSubmitAnswer, onSaveSession, stats, onBack }) {
-  const [step, setStep] = useState('B');
-  const [lessonComplete, setLessonComplete] = useState(false);
+const PROGRESS_KEY = 'nh_lesson_progress';
 
-  // ✅ 로컬 score 카운터 — stats prop 의존 제거
+function loadProgress(lessonId) {
+  try {
+    const saved = localStorage.getItem(PROGRESS_KEY);
+    if (!saved) return null;
+    const data = JSON.parse(saved);
+    return data.lessonId === lessonId ? data : null;
+  } catch { return null; }
+}
+
+function saveProgress(lessonId, step) {
+  localStorage.setItem(PROGRESS_KEY, JSON.stringify({ lessonId, step }));
+}
+
+function clearProgress() {
+  localStorage.removeItem(PROGRESS_KEY);
+}
+
+export default function LessonPage({ user, lesson, onSubmitAnswer, onSaveSession, stats, onBack }) {
+  const saved = loadProgress(lesson.id);
+  const [step, setStep] = useState(saved?.step || 'B');
+  const [lessonComplete, setLessonComplete] = useState(false);
   const [localCorrect, setLocalCorrect] = useState(0);
   const [localTotal, setLocalTotal] = useState(0);
 
   const sentences = lesson.sentences || [];
+
+  // ✅ step 바뀔 때마다 저장
+  useEffect(() => {
+    if (!lessonComplete) saveProgress(lesson.id, step);
+  }, [step, lesson.id, lessonComplete]);
 
   const handleSubmitAnswer = (result) => {
     setLocalTotal((t) => t + 1);
@@ -24,6 +47,7 @@ export default function LessonPage({ user, lesson, onSubmitAnswer, onSaveSession
   const localScore = localTotal > 0 ? Math.round((localCorrect / localTotal) * 100) : 0;
 
   const handleComplete = () => {
+    clearProgress(); // ✅ 완료 시 진행 상태 삭제
     setLessonComplete(true);
     onSaveSession?.({ lessonId: lesson.id, studyMinutes: Math.max(5, sentences.length * 4) });
   };
@@ -65,35 +89,18 @@ export default function LessonPage({ user, lesson, onSubmitAnswer, onSaveSession
         </div>
       </section>
 
-      {/* A. Video — always visible */}
       <YouTubeEmbed url={lesson.youtubeUrl} timestamp={lesson.youtubeTimestamp} />
 
-      {/* B. Practice */}
       {step === 'B' && (
-        <PracticeSection
-          lesson={lesson}
-          onSubmitAnswer={handleSubmitAnswer}
-          onAllAnswered={() => setStep('C')}
-        />
+        <PracticeSection lesson={lesson} onSubmitAnswer={handleSubmitAnswer}
+          onAllAnswered={() => setStep('C')} />
       )}
-
-      {/* C. Shadowing */}
       {step === 'C' && (
-        <ShadowingSection
-          sentences={sentences}
-          onComplete={() => setStep('D')}
-        />
+        <ShadowingSection sentences={sentences} onComplete={() => setStep('D')} />
       )}
-
-      {/* D. Output */}
       {step === 'D' && (
-        <OutputSection
-          sentences={sentences}
-          onSubmit={() => setStep('done')}
-        />
+        <OutputSection sentences={sentences} onSubmit={() => setStep('done')} />
       )}
-
-      {/* Complete */}
       {step === 'done' && (
         <div className="done-actions">
           <button type="button" className="primary-action complete-btn" onClick={handleComplete}>

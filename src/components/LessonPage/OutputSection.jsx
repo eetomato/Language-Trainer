@@ -1,40 +1,68 @@
-import { useState } from 'react';
-import { Send } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Check, ChevronRight, SkipForward } from 'lucide-react';
 
-function getLocalFeedback(sentences, memo) {
-  const lines = memo.trim().split('\n').filter((l) => l.trim());
-  const lessonWords = sentences.flatMap((s) =>
-    s.text.toLowerCase().split(/\s+/).map((w) => w.replace(/[.,!?]/g, ''))
-  );
+function normalize(str) {
+  return str.trim().toLowerCase().replace(/[.,!?'"]/g, '').replace(/\s+/g, ' ');
+}
 
-  const usedWords = lessonWords.filter((w) =>
-    w.length > 3 && memo.toLowerCase().includes(w)
-  );
-
-  if (lines.length < 2) {
-    return "Try to write at least 3 sentences. You can do it! 💪";
-  }
-  if (usedWords.length === 0) {
-    return "Good effort! Try using words from today's lesson in your sentences.";
-  }
-  if (lines.length >= 3 && usedWords.length >= 2) {
-    return `Great work! You used lesson expressions naturally. Keep practicing on the floor! 🌟`;
-  }
-  return `Nice try! You used ${usedWords.length} word(s) from the lesson. Try adding more expressions next time.`;
+function shuffle(arr) {
+  return [...arr].sort(() => Math.random() - 0.5);
 }
 
 export default function OutputSection({ sentences, onSubmit }) {
-  const [memo, setMemo] = useState('');
-  const [feedback, setFeedback] = useState('');
-  const [submitted, setSubmitted] = useState(false);
+  const order = useMemo(() => shuffle(sentences.map((_, i) => i)), []);
+  const [current, setCurrent] = useState(0);
+  const [input, setInput] = useState('');
+  const [result, setResult] = useState(null); // null | 'correct' | 'wrong'
+  const [revealed, setRevealed] = useState(false);
+  const [done, setDone] = useState(false);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!memo.trim()) return;
-    const fb = getLocalFeedback(sentences, memo);
-    setFeedback(fb);
-    setSubmitted(true);
+  if (!sentences.length) {
     onSubmit?.();
+    return null;
+  }
+
+  if (done) {
+    return (
+      <section className="lesson-section output-section">
+        <div className="section-heading">
+          <p className="eyebrow">D. Output</p>
+          <h2>Write it out</h2>
+        </div>
+        <div className="output-feedback">
+          <p className="eyebrow" style={{ color: 'var(--accent)' }}>Complete! 🎉</p>
+          <p className="feedback-text">Great work! Keep using these expressions on the floor.</p>
+        </div>
+      </section>
+    );
+  }
+
+  const sentenceIdx = order[current];
+  const sentence = sentences[sentenceIdx];
+
+  const handleCheck = () => {
+    if (!input.trim()) return;
+    const ok = normalize(input) === normalize(sentence.text);
+    setResult(ok ? 'correct' : 'wrong');
+    setRevealed(true);
+  };
+
+  const handleNext = () => {
+    const next = current + 1;
+    if (next >= sentences.length) {
+      setDone(true);
+      onSubmit?.();
+    } else {
+      setCurrent(next);
+      setInput('');
+      setResult(null);
+      setRevealed(false);
+    }
+  };
+
+  const handleSkip = () => {
+    setRevealed(true);
+    setResult('skipped');
   };
 
   return (
@@ -44,34 +72,64 @@ export default function OutputSection({ sentences, onSubmit }) {
         <h2>Write it out</h2>
       </div>
 
-      <p className="output-hint">Use today's expressions to write 3 sentences in English.</p>
+      <p className="output-hint">
+        Type the sentence from memory. ({current + 1} / {sentences.length})
+      </p>
 
-      <ul className="output-ref-list">
-        {sentences.map((s, i) => <li key={i}>{s.text}</li>)}
-      </ul>
-
-      {!submitted ? (
-        <form onSubmit={handleSubmit} className="output-form">
-          <textarea
-            value={memo}
-            onChange={(e) => setMemo(e.target.value)}
-            placeholder={`Line 1: ...\nLine 2: ...\nLine 3: ...`}
-            rows={5}
-          />
-          <button
-            type="submit"
-            className="primary-action compact"
-            disabled={!memo.trim()}
-          >
-            <Send size={16} /> Submit
-          </button>
-        </form>
-      ) : (
-        <div className="output-feedback">
-          <p className="eyebrow" style={{ color: 'var(--accent)' }}>Feedback</p>
-          <p className="feedback-text">{feedback}</p>
+      {sentence.translation && (
+        <p className="sentence-translation" style={{ marginBottom: 4 }}>
+          {sentence.translation}
+        </p>
+      )}
+      {sentence.pattern && (
+        <div className="sentence-pattern" style={{ marginBottom: 16 }}>
+          <span className="pattern-label">Pattern</span>
+          <span className="pattern-text">{sentence.pattern}</span>
         </div>
       )}
+
+      <textarea
+        className="output-textarea"
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        placeholder="Type the full sentence..."
+        rows={3}
+        disabled={revealed}
+      />
+
+      {revealed && (
+        <div className={`output-result ${result}`}>
+          {result === 'correct' && <p className="blank-feedback correct">✓ Correct!</p>}
+          {result === 'wrong' && (
+            <>
+              <p className="blank-feedback wrong">✗ Not quite</p>
+              <p className="output-answer">Answer: <strong>{sentence.text}</strong></p>
+            </>
+          )}
+          {result === 'skipped' && (
+            <p className="output-answer">Answer: <strong>{sentence.text}</strong></p>
+          )}
+        </div>
+      )}
+
+      <div className="output-actions">
+        {!revealed ? (
+          <>
+            <button type="button" className="primary-action compact"
+              onClick={handleCheck} disabled={!input.trim()}>
+              <Check size={16} /> Check
+            </button>
+            <button type="button" className="retry-btn" onClick={handleSkip}
+              title="Skip this sentence">
+              <SkipForward size={16} /> Pass
+            </button>
+          </>
+        ) : (
+          <button type="button" className="primary-action compact" onClick={handleNext}>
+            {current + 1 >= sentences.length ? 'Complete' : 'Next'} <ChevronRight size={16} />
+          </button>
+        )}
+      </div>
     </section>
   );
 }
