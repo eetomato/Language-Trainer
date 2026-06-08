@@ -73,6 +73,19 @@ export default function LessonFlow({
     );
   }
 
+  // ── 복습 판단 (Video 모드 진입 시 공통 체크) ──────────────
+  const today = toDateStr(new Date().toISOString());
+  const lastCompleted = completed.length > 0 ? completed[completed.length - 1] : null;
+  const lastCompletedDate = lastCompleted ? toDateStr(lastCompleted.date) : null;
+  const lastCompletedLesson = lastCompleted
+    ? sorted.find((l) => l.id === lastCompleted.lessonId) ?? null
+    : null;
+
+  const isReviewPending = lastCompletedDate !== null
+    && lastCompletedDate !== today
+    && !!lastCompletedLesson
+    && !reviewDone;
+
   // ── 허브 ───────────────────────────────────────────────────
   if (mode === 'hub') {
     return (
@@ -118,42 +131,47 @@ export default function LessonFlow({
     );
   }
 
-  // ── Video Lesson 목록 ──────────────────────────────────────
+  // ── Video Lesson ───────────────────────────────────────────
+
+  // 복습이 남아 있으면 먼저 표시
+  if (isReviewPending && !selectedLesson) {
+    return (
+      <ReviewSection
+        lesson={lastCompletedLesson}
+        user={user}
+        onComplete={() => setReviewDone(true)}
+        onBack={() => setMode('hub')}
+      />
+    );
+  }
+
+  // 레슨이 1개면 목록 없이 바로 자동 선택
   if (!selectedLesson) {
+    if (sorted.length === 1) {
+      // 다음 렌더에서 바로 LessonPage로 진입
+      return (
+        <LessonPage
+          user={user}
+          lesson={sorted[0]}
+          onSubmitAnswer={submitAnswer}
+          onSaveSession={(data) => {
+            saveSession(data);
+            markLessonComplete(sorted[0].id);
+            setMode('hub');
+          }}
+          stats={employeeStats}
+          onBack={() => setMode('hub')}
+        />
+      );
+    }
+
     return (
       <LessonList
         lessons={sorted}
         loading={lessonsLoading}
         user={user}
         onBack={() => setMode('hub')}
-        onSelect={(lesson) => {
-          setSelectedLesson(lesson);
-          setReviewDone(false);
-        }}
-      />
-    );
-  }
-
-  // 복습 판단
-  const today = toDateStr(new Date().toISOString());
-  const lastCompleted = completed.length > 0 ? completed[completed.length - 1] : null;
-  const lastCompletedDate = lastCompleted ? toDateStr(lastCompleted.date) : null;
-  const lastCompletedLesson = lastCompleted
-    ? sorted.find((l) => l.id === lastCompleted.lessonId) ?? null
-    : null;
-
-  const isReviewDay = lastCompletedDate !== null
-    && lastCompletedDate !== today
-    && !!lastCompletedLesson
-    && lastCompletedLesson.id !== selectedLesson.id
-    && !reviewDone;
-
-  if (isReviewDay) {
-    return (
-      <ReviewSection
-        lesson={lastCompletedLesson}
-        user={user}
-        onComplete={() => setReviewDone(true)}
+        onSelect={(lesson) => setSelectedLesson(lesson)}
       />
     );
   }

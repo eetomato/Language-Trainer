@@ -107,7 +107,7 @@ function ReviewCard({ sentence, index, onComplete }) {
 }
 
 // ── Main ReviewSection ────────────────────────────────────────
-export default function ReviewSection({ lesson, user, onComplete }) {
+export default function ReviewSection({ lesson, user, onComplete, onBack }) {
   const [cleared, setCleared] = useState(0);
   const sentences = lesson?.sentences || [];
 
@@ -128,6 +128,11 @@ export default function ReviewSection({ lesson, user, onComplete }) {
     <div className="lesson-page">
       <section className="lesson-hero">
         <div>
+          {onBack && (
+            <button className="back-btn" type="button" onClick={onBack}>
+              ← Back / 戻る
+            </button>
+          )}
           <p className="eyebrow">Review</p>
           <h2>Yesterday's expressions</h2>
           <p>{user.name} — Let's practice what you learned yesterday.</p>
