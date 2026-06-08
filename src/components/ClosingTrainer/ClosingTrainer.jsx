@@ -3,7 +3,7 @@ import { supabase } from '../../utils/supabaseClient';
 import { CLOSING_CATEGORIES } from './closingData';
 import ClosingCategory from './ClosingCategory';
 
-export default function ClosingTrainer({ user }) {
+export default function ClosingTrainer({ user, saveSession }) {
   const [categories, setCategories] = useState(CLOSING_CATEGORIES);
   const [selected, setSelected] = useState(null);
 
@@ -38,6 +38,10 @@ export default function ClosingTrainer({ user }) {
       <ClosingCategory
         category={selected}
         onBack={() => setSelected(null)}
+        onComplete={(studyMinutes) => {
+          saveSession?.({ lessonId: `closing-${selected.id}`, studyMinutes });
+          setSelected(null);
+        }}
       />
     );
   }

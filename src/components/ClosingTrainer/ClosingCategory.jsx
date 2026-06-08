@@ -56,7 +56,7 @@ function StepNav({ onPrev, onNext, nextLabel = 'Next', nextDisabled = false }) {
   );
 }
 
-export default function ClosingCategory({ category, onBack }) {
+export default function ClosingCategory({ category, onBack, onComplete }) {
   const expressions = category.expressions || [];
   const [exprIndex, setExprIndex] = useState(0);
   const [step, setStep] = useState(1);
@@ -70,6 +70,9 @@ export default function ClosingCategory({ category, onBack }) {
 
   const goNext = () => {
     if (isLast) {
+      // 카테고리 완료 — 세션 저장 후 목록으로
+      const studyMinutes = Math.max(3, expressions.length * 2);
+      onComplete?.(studyMinutes);
       onBack();
     } else {
       setExprIndex((i) => i + 1);

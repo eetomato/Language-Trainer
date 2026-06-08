@@ -85,7 +85,7 @@ export default function LessonFlow({
           onClick={() => setMode('hub')}>
           ← Back / 戻る
         </button>
-        <ClosingTrainer user={user} />
+        <ClosingTrainer user={user} saveSession={saveSession} />
       </div>
     );
   }
