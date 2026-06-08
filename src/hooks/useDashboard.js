@@ -49,7 +49,9 @@ export function useDashboard(user) {
         mistakes: mistakes || [],
         stores: stores || [],
       });
-    } catch (_) {}
+    } catch (e) {
+      console.warn('[useDashboard] 매니저 데이터 로드 실패', e.message);
+    }
   }, [user?.role]);
 
   useEffect(() => {

@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useProgress } from '../../hooks/useProgress';
 import LessonPage from './LessonPage';
+import LessonList from './LessonList';
 import ReviewSection from './ReviewSection';
 import WeeklyTest from './WeeklyTest';
 
-// ✅ 날짜 문자열 (YYYY-MM-DD) 반환
 function toDateStr(isoStr) {
   return isoStr ? isoStr.slice(0, 10) : null;
 }
@@ -14,6 +14,7 @@ export default function LessonFlow({
   submitAnswer, saveSession, employeeStats,
 }) {
   const { completed, isLessonDone, isTestDone, markLessonComplete, markTestComplete } = useProgress(user);
+  const [selectedLesson, setSelectedLesson] = useState(null);
   const [reviewDone, setReviewDone] = useState(false);
 
   const sorted = useMemo(() =>
@@ -30,30 +31,37 @@ export default function LessonFlow({
     );
   }
 
-  // ✅ 미완료 레슨 중 첫 번째
-  const todayIdx = sorted.findIndex((l) => l.dayNumber !== 7 && !isLessonDone(l.id));
-  const todayLesson = sorted[todayIdx] ?? latestLesson ?? null;
+  // ── 레슨 선택 화면 ─────────────────────────────────────────
+  if (!selectedLesson) {
+    return (
+      <LessonList
+        lessons={sorted}
+        loading={lessonsLoading}
+        user={user}
+        onSelect={(lesson) => {
+          setSelectedLesson(lesson);
+          setReviewDone(false);
+        }}
+      />
+    );
+  }
 
-  // ✅ dayNumber 대신 날짜 기반으로 복습 판단
+  // ── 복습 판단 (날짜 기반) ──────────────────────────────────
   const today = toDateStr(new Date().toISOString());
-  const lastCompleted = completed.length > 0
-    ? completed[completed.length - 1]
-    : null;
+  const lastCompleted = completed.length > 0 ? completed[completed.length - 1] : null;
   const lastCompletedDate = lastCompleted ? toDateStr(lastCompleted.date) : null;
   const lastCompletedLesson = lastCompleted
     ? sorted.find((l) => l.id === lastCompleted.lessonId) ?? null
     : null;
 
-  // 어제 완료한 레슨이 있고, 오늘 아직 새 레슨을 시작 안 했으면 복습
   const isReviewDay = lastCompletedDate !== null
     && lastCompletedDate !== today
     && !!lastCompletedLesson
+    && lastCompletedLesson.id !== selectedLesson.id
     && !reviewDone;
 
-  // Weekly test
-  const currentWeek = todayLesson?.weekNumber
-    ?? sorted.filter((l) => l.dayNumber !== 7).at(-1)?.weekNumber
-    ?? 1;
+  // ── Weekly test ────────────────────────────────────────────
+  const currentWeek = selectedLesson.weekNumber ?? 1;
   const weekDays = sorted.filter((l) => l.weekNumber === currentWeek && l.dayNumber < 7);
   const allWeekDone = weekDays.length > 0 && weekDays.every((l) => isLessonDone(l.id));
   const testPending = allWeekDone && !isTestDone(currentWeek);
@@ -67,18 +75,6 @@ export default function LessonFlow({
         sentences={weekSentences}
         onComplete={() => markTestComplete(currentWeek)}
       />
-    );
-  }
-
-  if (!todayLesson) {
-    return (
-      <div className="lesson-page">
-        <section className="lesson-hero" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
-          <p className="eyebrow">All complete</p>
-          <h2>今週のレッスン完了！</h2>
-          <p>マネージャーが次のレッスンを追加するまでお待ちください。</p>
-        </section>
-      </div>
     );
   }
 
@@ -97,14 +93,15 @@ export default function LessonFlow({
   return (
     <LessonPage
       user={user}
-      lesson={todayLesson}
+      lesson={selectedLesson}
       onSubmitAnswer={submitAnswer}
       onSaveSession={(data) => {
         saveSession(data);
-        markLessonComplete(todayLesson.id);
+        markLessonComplete(selectedLesson.id);
+        setSelectedLesson(null); // 완료 후 목록으로 돌아가기
       }}
       stats={employeeStats}
-      onBack={null}
+      onBack={() => setSelectedLesson(null)}
     />
   );
 }

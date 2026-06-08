@@ -62,7 +62,8 @@ export function useLesson(user) {
     return result;
   };
 
-  const saveSession = ({ lessonId, studyMinutes }) => {
+  const saveSession = async ({ lessonId, studyMinutes }) => {
+    // localStorage 저장
     const sessions = JSON.parse(localStorage.getItem(SESSIONS_KEY) || '[]');
     sessions.push({
       id: crypto.randomUUID(),
@@ -72,6 +73,31 @@ export function useLesson(user) {
       date: new Date().toISOString(),
     });
     localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
+
+    // Supabase public.sessions 저장
+    if (supabase) {
+      try {
+        const { data: employee } = await supabase
+          .from('employees')
+          .select('id')
+          .eq('name', user.name)
+          .maybeSingle();
+
+        const validLessonId = lessonId?.match(
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+        ) ? lessonId : null;
+
+        const { error } = await supabase.from('sessions').insert({
+          employee_id: employee?.id ?? null,
+          lesson_id: validLessonId,
+          study_minutes: studyMinutes,
+        });
+
+        if (error) console.warn('[useLesson] sessions 저장 실패', error.message);
+      } catch (e) {
+        console.warn('[useLesson] sessions 예외', e.message);
+      }
+    }
   };
 
   const resetProgress = () => {
