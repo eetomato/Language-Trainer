@@ -167,11 +167,11 @@ function SentenceCard({ sentence, index, onComplete, onSubmitAnswer }) {
         {/* ✅ 문법 패턴 */}
         {sentence.pattern && (
           <div className="sentence-pattern">
-            <span className="pattern-label">Pattern</span>
+            <span className="pattern-label">Pattern: </span>
             <span className="pattern-text">{sentence.pattern}</span>
           </div>
         )}
-        <button type="button" className="primary-action compact" onClick={() => setPhase('practice')}>
+        <button type="button" className="primary-action compact" style={{ marginTop: '16px' }} onClick={() => setPhase('practice')}>
           Start Practice <ChevronRight size={16} />
         </button>
       </div>
