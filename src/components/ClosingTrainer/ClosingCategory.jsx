@@ -148,7 +148,7 @@ export default function ClosingCategory({ category, onBack }) {
       {step === 6 && (
         <div className="closing-step">
           <p className="closing-step-label">Step 6 — Recall</p>
-          <p className="closing-recall-prompt">"{expr.translation}" — 영어로?</p>
+          <p className="closing-recall-prompt">"{expr.translation}" — 英語で？</p>
           <div className="closing-choices">
             {choices[exprIndex].map((c) => {
               let cls = 'choice-btn';
