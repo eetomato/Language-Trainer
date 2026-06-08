@@ -1166,3 +1166,33 @@ button {
   color: var(--muted);
   line-height: 1.4;
 }
+
+/* ── Step nav (prev / next) ─────────────────────────── */
+.step-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.step-nav-prev {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 16px;
+  background: transparent;
+  border: 1.5px solid var(--line);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.step-nav-prev:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+.step-nav-next {
+  flex: 1;
+}

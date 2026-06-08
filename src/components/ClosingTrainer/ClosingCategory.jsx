@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Volume2, ChevronRight, RotateCcw, Check } from 'lucide-react';
+import { Volume2, ChevronLeft, ChevronRight, RotateCcw, Check } from 'lucide-react';
 
 function speak(text) {
   if (!window.speechSynthesis) return;
@@ -24,6 +24,23 @@ function makeChoices(correct) {
   return [...wrong, correct].sort(() => Math.random() - 0.5);
 }
 
+// ── 스텝 네비게이션 버튼 ──────────────────────────────────────
+function StepNav({ onPrev, onNext, nextLabel = 'Next', nextDisabled = false }) {
+  return (
+    <div className="step-nav">
+      <button className="step-nav-prev" type="button" onClick={onPrev}>
+        <ChevronLeft size={16} /> Back
+      </button>
+      {onNext && (
+        <button className="primary-action step-nav-next" type="button"
+          onClick={onNext} disabled={nextDisabled}>
+          {nextLabel} <ChevronRight size={16} />
+        </button>
+      )}
+    </div>
+  );
+}
+
 export default function ClosingCategory({ category, onBack }) {
   const expressions = category.expressions || [];
   const [exprIndex, setExprIndex] = useState(0);
@@ -35,7 +52,7 @@ export default function ClosingCategory({ category, onBack }) {
   const expr = expressions[exprIndex];
   const isLast = exprIndex === expressions.length - 1;
 
-  const next = () => {
+  const goNext = () => {
     if (isLast) {
       onBack();
     } else {
@@ -45,6 +62,8 @@ export default function ClosingCategory({ category, onBack }) {
       setChoiceResult(null);
     }
   };
+
+  const prevStep = (n) => () => setStep(n);
 
   if (!expr) return null;
 
@@ -57,20 +76,22 @@ export default function ClosingCategory({ category, onBack }) {
         <span className="closing-cat-progress">{exprIndex + 1} / {expressions.length}</span>
       </div>
 
-      {/* Step 1: 목적 설명 */}
+      {/* Step 1 */}
       {step === 1 && (
         <div className="closing-step">
           <p className="closing-step-label">Step 1 — Why this expression?</p>
           <div className="closing-intent-box">
             <p>{category.description}</p>
           </div>
-          <button className="primary-action" type="button" onClick={() => setStep(2)}>
-            Start <ChevronRight size={16} />
-          </button>
+          <StepNav
+            onPrev={onBack}
+            onNext={() => setStep(2)}
+            nextLabel="Start"
+          />
         </div>
       )}
 
-      {/* Step 2: 표현 보기 + TTS */}
+      {/* Step 2 */}
       {step === 2 && (
         <div className="closing-step">
           <p className="closing-step-label">Step 2 — Listen</p>
@@ -80,13 +101,11 @@ export default function ClosingCategory({ category, onBack }) {
               <Volume2 size={20} /> Listen
             </button>
           </div>
-          <button className="primary-action" type="button" onClick={() => setStep(3)}>
-            Next <ChevronRight size={16} />
-          </button>
+          <StepNav onPrev={prevStep(1)} onNext={() => setStep(3)} />
         </div>
       )}
 
-      {/* Step 3: 번역 */}
+      {/* Step 3 */}
       {step === 3 && (
         <div className="closing-step">
           <p className="closing-step-label">Step 3 — Meaning</p>
@@ -94,13 +113,11 @@ export default function ClosingCategory({ category, onBack }) {
             <p className="closing-expr-text">{expr.text}</p>
             <p className="closing-expr-translation">{expr.translation}</p>
           </div>
-          <button className="primary-action" type="button" onClick={() => setStep(4)}>
-            Next <ChevronRight size={16} />
-          </button>
+          <StepNav onPrev={prevStep(2)} onNext={() => setStep(4)} />
         </div>
       )}
 
-      {/* Step 4: 대화 예시 */}
+      {/* Step 4 */}
       {step === 4 && (
         <div className="closing-step">
           <p className="closing-step-label">Step 4 — In context</p>
@@ -123,13 +140,11 @@ export default function ClosingCategory({ category, onBack }) {
               </div>
             </div>
           </div>
-          <button className="primary-action" type="button" onClick={() => { setStep(5); setShadowCount(0); }}>
-            Next <ChevronRight size={16} />
-          </button>
+          <StepNav onPrev={prevStep(3)} onNext={() => { setStep(5); setShadowCount(0); }} />
         </div>
       )}
 
-      {/* Step 5: 쉐도잉 3회 */}
+      {/* Step 5 */}
       {step === 5 && (
         <div className="closing-step">
           <p className="closing-step-label">Step 5 — Shadowing ({shadowCount}/3)</p>
@@ -142,19 +157,18 @@ export default function ClosingCategory({ category, onBack }) {
           }}>
             <Volume2 size={20} /> Say it
           </button>
-          {shadowCount >= 3 && (
-            <button className="primary-action" type="button" onClick={() => setStep(6)}>
-              Next <ChevronRight size={16} />
-            </button>
-          )}
+          <StepNav
+            onPrev={prevStep(4)}
+            onNext={shadowCount >= 3 ? () => setStep(6) : null}
+          />
         </div>
       )}
 
-      {/* Step 6: 객관식 */}
+      {/* Step 6 */}
       {step === 6 && (
         <div className="closing-step">
           <p className="closing-step-label">Step 6 — Recall</p>
-          <p className="closing-recall-prompt">"{expr.translation}" — 英語で？</p>
+          <p className="closing-recall-prompt">&ldquo;{expr.translation}&rdquo; — 英語で？</p>
           <div className="closing-choices">
             {choices[exprIndex].map((c) => {
               let cls = 'choice-btn';
@@ -171,23 +185,25 @@ export default function ClosingCategory({ category, onBack }) {
               );
             })}
           </div>
-          {choiceResult && (
-            <button className="primary-action" type="button" onClick={() => setStep(7)}>
-              {choiceResult === expr.text ? <><Check size={16} /> Great!</> : <><RotateCcw size={16} /> Continue</>}
-            </button>
-          )}
+          <StepNav
+            onPrev={() => { prevStep(5)(); setChoiceResult(null); }}
+            onNext={choiceResult ? () => setStep(7) : null}
+            nextLabel={choiceResult === expr.text ? '✓ Great!' : 'Continue'}
+          />
         </div>
       )}
 
-      {/* Step 7: 완료 */}
+      {/* Step 7 */}
       {step === 7 && (
         <div className="closing-step closing-complete">
           <p className="closing-step-label">Complete ✓</p>
           <p className="closing-expr-text">{expr.text}</p>
           <p className="closing-expr-translation">{expr.translation}</p>
-          <button className="primary-action" type="button" onClick={next}>
-            {isLast ? 'Finish' : 'Next expression'} <ChevronRight size={16} />
-          </button>
+          <StepNav
+            onPrev={prevStep(6)}
+            onNext={goNext}
+            nextLabel={isLast ? 'Finish' : 'Next expression'}
+          />
         </div>
       )}
     </div>
