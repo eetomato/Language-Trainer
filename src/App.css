@@ -1287,3 +1287,231 @@ button {
   color: var(--ink);
   margin-top: 4px;
 }
+
+/* ── Closing Trainer ─────────────────────────────────── */
+.closing-trainer { padding-bottom: 40px; }
+
+.closing-header {
+  padding: 24px 16px 16px;
+}
+
+.closing-subtitle {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin: 4px 0 0;
+}
+
+.closing-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 0 16px;
+}
+
+.closing-cat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 20px 16px;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  text-align: left;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.closing-cat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+}
+
+.closing-cat-icon {
+  font-size: 1.8rem;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.closing-cat-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0;
+}
+
+.closing-cat-intent {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+.closing-cat-count {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin: 6px 0 0;
+  padding: 2px 8px;
+  background: rgba(0,0,0,0.06);
+  border-radius: 20px;
+}
+
+/* ── ClosingCategory 헤더 ────────────────────────────── */
+.closing-category { padding-bottom: 40px; }
+
+.closing-cat-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px 8px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 4px;
+}
+
+.closing-back-btn {
+  font-size: 0.85rem;
+  color: var(--muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+}
+
+.closing-back-btn:hover { color: var(--ink); }
+
+.closing-cat-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.closing-cat-title {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--ink);
+}
+
+.closing-cat-progress {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.closing-step {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.closing-step-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.closing-intent-box {
+  background: var(--paper);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.closing-expr-card {
+  background: var(--paper);
+  border-radius: 12px;
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.closing-expr-text {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0;
+}
+
+.closing-expr-translation {
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+.closing-recall-prompt {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0;
+}
+
+.closing-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.closing-complete {
+  align-items: center;
+  text-align: center;
+  padding-top: 32px;
+}
+
+/* ── Closing dialogue ───────────────────────────────── */
+.closing-dialogue {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dialogue-line {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.dialogue-role {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  padding-top: 2px;
+  min-width: 52px;
+}
+
+.dialogue-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dialogue-translation {
+  font-size: 0.75rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.tts-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 1.5px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  font-size: 0.9rem;
+  cursor: pointer;
+  width: fit-content;
+}
+
+.tts-inline {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+}

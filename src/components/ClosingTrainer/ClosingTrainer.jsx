@@ -3,6 +3,14 @@ import { supabase } from '../../utils/supabaseClient';
 import { CLOSING_CATEGORIES } from './closingData';
 import ClosingCategory from './ClosingCategory';
 
+const CATEGORY_ICONS = {
+  appreciation: '🙏',
+  reassurance: '✨',
+  farewell: '👋',
+  revisit: '🔄',
+  product: '👔',
+};
+
 export default function ClosingTrainer({ user, saveSession }) {
   const [categories, setCategories] = useState(CLOSING_CATEGORIES);
   const [selected, setSelected] = useState(null);
@@ -15,7 +23,6 @@ export default function ClosingTrainer({ user, saveSession }) {
       .order('created_at')
       .then(({ data, error }) => {
         if (error || !data) return;
-        // 로컬 데이터와 병합 (id 기준 중복 제거)
         setCategories((prev) => {
           const existingIds = new Set(prev.map((c) => c.id));
           const newOnes = data
@@ -55,19 +62,24 @@ export default function ClosingTrainer({ user, saveSession }) {
       </div>
 
       <div className="closing-grid">
-        {categories.map((cat) => (
-          <button
-            key={cat.id}
-            className="closing-cat-card"
-            style={{ background: cat.color }}
-            type="button"
-            onClick={() => setSelected(cat)}
-          >
-            <p className="closing-cat-name">{cat.category}</p>
-            <p className="closing-cat-intent">{cat.intent}</p>
-            <p className="closing-cat-count">{(cat.expressions || []).length} expressions</p>
-          </button>
-        ))}
+        {categories.map((cat) => {
+          const icon = CATEGORY_ICONS[cat.id] || '💬';
+          const count = (cat.expressions || []).length;
+          return (
+            <button
+              key={cat.id}
+              className="closing-cat-card"
+              style={{ background: cat.color }}
+              type="button"
+              onClick={() => setSelected(cat)}
+            >
+              <span className="closing-cat-icon">{icon}</span>
+              <p className="closing-cat-name">{cat.category}</p>
+              <p className="closing-cat-intent">{cat.intent}</p>
+              <p className="closing-cat-count">{count} expressions</p>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

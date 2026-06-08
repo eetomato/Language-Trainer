@@ -93,9 +93,11 @@ export default function ClosingCategory({ category, onBack, onComplete }) {
   return (
     <div className="closing-category">
       <div className="closing-cat-header">
-        <button className="back-btn" type="button" onClick={onBack}>← Back</button>
-        <span className="closing-cat-title">{category.category}</span>
-        <span className="closing-cat-progress">{exprIndex + 1} / {expressions.length}</span>
+        <button className="closing-back-btn" type="button" onClick={onBack}>← Back</button>
+        <div className="closing-cat-meta">
+          <span className="closing-cat-title">{category.category}</span>
+          <span className="closing-cat-progress">{exprIndex + 1} / {expressions.length}</span>
+        </div>
       </div>
 
       {/* Step 1 */}
