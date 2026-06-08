@@ -30,36 +30,31 @@ export function calculateEmployeeStats(user, results = [], sessions = []) {
       return acc;
     }, {});
 
-  // 연속 학습일 계산
-  const uniqueDates = [...new Set(
-    personalSessions.map((s) => (s.date || '').slice(0, 10)).filter(Boolean)
-  )].sort().reverse();
-
-  let streak = 0;
-  const today = new Date();
-  let checkDate = today.toISOString().slice(0, 10);
-  // 오늘 학습 안 했으면 어제부터 체크
-  if (uniqueDates[0] !== checkDate) {
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    checkDate = yesterday.toISOString().slice(0, 10);
-  }
-  for (const date of uniqueDates) {
-    if (date === checkDate) {
-      streak++;
-      const d = new Date(checkDate);
-      d.setDate(d.getDate() - 1);
-      checkDate = d.toISOString().slice(0, 10);
-    } else if (date < checkDate) {
-      break;
-    }
-  }
-
   return {
     score,
     completed: total,
     studyMinutes,
-    streak,
+    streak: (() => {
+      if (!personalSessions.length) return 0;
+      const dates = [...new Set(
+        personalSessions.map((s) => s.date?.slice(0, 10)).filter(Boolean)
+      )].sort().reverse();
+
+      let count = 0;
+      let current = new Date().toISOString().slice(0, 10);
+
+      for (const date of dates) {
+        if (date === current) {
+          count++;
+          const d = new Date(current);
+          d.setDate(d.getDate() - 1);
+          current = d.toISOString().slice(0, 10);
+        } else {
+          break;
+        }
+      }
+      return count;
+    })(),
     weakVocabulary: Object.entries(mistakes).map(([word, count]) => ({ word, count })),
     lastLesson: personalSessions.length
       ? new Date(personalSessions.at(-1).date).toLocaleDateString('ja-JP')
