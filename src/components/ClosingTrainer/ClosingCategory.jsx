@@ -28,7 +28,18 @@ function normalize(str) {
   return str.trim().toLowerCase().replace(/[.!?,]/g, '');
 }
 
-// ── 스텝 네비게이션 버튼 ──────────────────────────────────────
+// 。で文を分割して改行表示
+function DescriptionText({ text }) {
+  const lines = text.split('。').map((s) => s.trim()).filter(Boolean);
+  return (
+    <div className="closing-description-lines">
+      {lines.map((line, i) => (
+        <p key={i}>{line}。</p>
+      ))}
+    </div>
+  );
+}
+
 function StepNav({ onPrev, onNext, nextLabel = 'Next', nextDisabled = false }) {
   return (
     <div className="step-nav">
@@ -49,11 +60,8 @@ export default function ClosingCategory({ category, onBack }) {
   const expressions = category.expressions || [];
   const [exprIndex, setExprIndex] = useState(0);
   const [step, setStep] = useState(1);
-  const [shadowCount, setShadowCount] = useState(0);
   const [choices] = useState(() => expressions.map((e) => makeChoices(e.text)));
   const [choiceResult, setChoiceResult] = useState(null);
-
-  // Step 6: 빈칸 채우기
   const [typedAnswer, setTypedAnswer] = useState('');
   const [typeResult, setTypeResult] = useState(null); // 'correct' | 'wrong' | null
 
@@ -66,7 +74,6 @@ export default function ClosingCategory({ category, onBack }) {
     } else {
       setExprIndex((i) => i + 1);
       setStep(1);
-      setShadowCount(0);
       setChoiceResult(null);
       setTypedAnswer('');
       setTypeResult(null);
@@ -82,7 +89,6 @@ export default function ClosingCategory({ category, onBack }) {
 
   return (
     <div className="closing-category">
-      {/* 헤더 */}
       <div className="closing-cat-header">
         <button className="back-btn" type="button" onClick={onBack}>← Back</button>
         <span className="closing-cat-title">{category.category}</span>
@@ -94,7 +100,7 @@ export default function ClosingCategory({ category, onBack }) {
         <div className="closing-step">
           <p className="closing-step-label">Step 1 — Why this expression?</p>
           <div className="closing-intent-box">
-            <p>{category.description}</p>
+            <DescriptionText text={category.description} />
           </div>
           <StepNav onPrev={onBack} onNext={() => setStep(2)} nextLabel="Start" />
         </div>
@@ -149,34 +155,14 @@ export default function ClosingCategory({ category, onBack }) {
               </div>
             </div>
           </div>
-          <StepNav onPrev={() => setStep(3)} onNext={() => { setStep(5); setShadowCount(0); }} />
+          <StepNav onPrev={() => setStep(3)} onNext={() => { setStep(5); resetTypeStep(); }} />
         </div>
       )}
 
-      {/* Step 5 */}
+      {/* Step 5: 빈칸 채우기 (정답만 통과) */}
       {step === 5 && (
         <div className="closing-step">
-          <p className="closing-step-label">Step 5 — Shadowing ({shadowCount}/3)</p>
-          <div className="closing-expr-card">
-            <p className="closing-expr-text">{expr.text}</p>
-          </div>
-          <button className="tts-btn" type="button" onClick={() => {
-            speak(expr.text);
-            setShadowCount((c) => Math.min(c + 1, 3));
-          }}>
-            <Volume2 size={20} /> Say it
-          </button>
-          <StepNav
-            onPrev={() => setStep(4)}
-            onNext={shadowCount >= 3 ? () => { setStep(6); resetTypeStep(); } : null}
-          />
-        </div>
-      )}
-
-      {/* Step 6: 빈칸 채우기 */}
-      {step === 6 && (
-        <div className="closing-step">
-          <p className="closing-step-label">Step 6 — Type it out</p>
+          <p className="closing-step-label">Step 5 — Type it out</p>
           <p className="closing-recall-prompt">&ldquo;{expr.translation}&rdquo;</p>
           <p className="closing-type-hint">英語で書いてみましょう</p>
 
@@ -222,17 +208,18 @@ export default function ClosingCategory({ category, onBack }) {
             </div>
           )}
 
+          {/* 정답일 때만 Next 활성화 */}
           <StepNav
-            onPrev={() => { setStep(5); resetTypeStep(); }}
-            onNext={typeResult ? () => { setStep(7); setChoiceResult(null); } : null}
+            onPrev={() => { setStep(4); resetTypeStep(); }}
+            onNext={typeResult === 'correct' ? () => { setStep(6); setChoiceResult(null); } : null}
           />
         </div>
       )}
 
-      {/* Step 7: 객관식 (기존 Step 6) */}
-      {step === 7 && (
+      {/* Step 6: 객관식 */}
+      {step === 6 && (
         <div className="closing-step">
-          <p className="closing-step-label">Step 7 — Recall</p>
+          <p className="closing-step-label">Step 6 — Recall</p>
           <p className="closing-recall-prompt">&ldquo;{expr.translation}&rdquo; — 英語で？</p>
           <div className="closing-choices">
             {choices[exprIndex].map((c) => {
@@ -251,21 +238,21 @@ export default function ClosingCategory({ category, onBack }) {
             })}
           </div>
           <StepNav
-            onPrev={() => { setStep(6); setChoiceResult(null); resetTypeStep(); }}
-            onNext={choiceResult ? () => setStep(8) : null}
+            onPrev={() => { setStep(5); setChoiceResult(null); resetTypeStep(); }}
+            onNext={choiceResult ? () => setStep(7) : null}
             nextLabel={choiceResult === expr.text ? '✓ Great!' : 'Continue'}
           />
         </div>
       )}
 
-      {/* Step 8: 완료 (기존 Step 7) */}
-      {step === 8 && (
+      {/* Step 7: 완료 */}
+      {step === 7 && (
         <div className="closing-step closing-complete">
           <p className="closing-step-label">Complete ✓</p>
           <p className="closing-expr-text">{expr.text}</p>
           <p className="closing-expr-translation">{expr.translation}</p>
           <StepNav
-            onPrev={() => setStep(7)}
+            onPrev={() => setStep(6)}
             onNext={goNext}
             nextLabel={isLast ? 'Finish' : 'Next expression'}
           />

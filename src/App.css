@@ -1198,6 +1198,11 @@ button {
 }
 
 /* ── Step 6: Type it out ────────────────────────────── */
+.closing-description-lines p {
+  margin: 0 0 8px;
+  line-height: 1.6;
+}
+
 .closing-type-hint {
   font-size: 0.85rem;
   color: var(--muted);
