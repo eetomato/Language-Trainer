@@ -188,6 +188,9 @@ function SentenceCard({ sentence, index, onComplete, onSubmitAnswer }) {
           ))}
         </span>
       </div>
+      {sentence.translation && (
+        <p className="sentence-translation-hint">{sentence.translation}</p>
+      )}
       {stage === 1 && <ChunkStage sentence={sentence} onPass={() => setStage(2)} />}
       {stage === 2 && (
         <ChoiceBlankStage sentence={sentence} blankCount={2} stepNum={2}

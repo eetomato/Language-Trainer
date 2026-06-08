@@ -1198,6 +1198,13 @@ button {
 }
 
 /* ── Step 6: Type it out ────────────────────────────── */
+.sentence-translation-hint {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin: 0 0 12px;
+  line-height: 1.5;
+}
+
 .closing-description-lines p {
   margin: 0 0 8px;
   line-height: 1.6;
