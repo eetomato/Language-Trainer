@@ -1153,3 +1153,16 @@ button {
   gap: 8px;
   width: 100%;
 }
+
+/* ── Closing dialogue ───────────────────────────────── */
+.dialogue-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dialogue-translation {
+  font-size: 0.75rem;
+  color: var(--muted);
+  line-height: 1.4;
+}

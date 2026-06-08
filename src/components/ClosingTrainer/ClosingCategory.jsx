@@ -107,14 +107,20 @@ export default function ClosingCategory({ category, onBack }) {
           <div className="closing-dialogue">
             <div className="dialogue-line staff">
               <span className="dialogue-role">Staff</span>
-              <span>{expr.text}</span>
-              <button className="tts-inline" type="button" onClick={() => speak(expr.text)}>
-                <Volume2 size={14} />
-              </button>
+              <div className="dialogue-content">
+                <span>{expr.text}</span>
+                <button className="tts-inline" type="button" onClick={() => speak(expr.text)}>
+                  <Volume2 size={14} />
+                </button>
+                <span className="dialogue-translation">{expr.translation}</span>
+              </div>
             </div>
             <div className="dialogue-line customer">
               <span className="dialogue-role">Customer</span>
-              <span>ありがとう。また来ます。</span>
+              <div className="dialogue-content">
+                <span>Thank you. I&apos;ll come again.</span>
+                <span className="dialogue-translation">ありがとうございます。またお伺いします。</span>
+              </div>
             </div>
           </div>
           <button className="primary-action" type="button" onClick={() => { setStep(5); setShadowCount(0); }}>
