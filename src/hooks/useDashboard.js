@@ -124,9 +124,15 @@ export function useDashboard(user) {
   }, [loadManagerData]);
 
   // ── 매니저 통계: localStorage + Supabase 병합 ─────────────
-  // 현재 로그인한 매니저 본인은 직원 목록에서 제외
+  // Supabase에서 매니저 role인 이름 목록 수집
+  const managerNames = new Set(
+    supabaseEmployees
+      .filter((e) => e.role === 'manager')
+      .map((e) => e.name)
+  );
+  // 현재 로그인한 사용자 + Supabase 매니저 제외
   const localEmps = buildLocalEmployees(localResults, localSessions)
-    .filter((emp) => emp.name !== user?.name);
+    .filter((emp) => emp.name !== user?.name && !managerNames.has(emp.name));
   const mergedEmployees = mergeEmployees(supabaseEmployees, localEmps);
 
   const managerStats = calculateManagerStats({
