@@ -1083,3 +1083,73 @@ button {
 .test-answer-row.correct-answer { color: #147a40; }
 .wrong-label { font-weight: 700; color: var(--warning); }
 .correct-label { font-weight: 700; color: #147a40; }
+
+/* ── Lesson Hub ─────────────────────────────────────── */
+.lesson-hub-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding: 16px;
+}
+
+.lesson-hub-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px 16px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  text-align: center;
+}
+
+.lesson-hub-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+
+.hub-icon {
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
+.lesson-hub-card h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--ink);
+}
+
+.lesson-hub-card p {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+.hub-sub {
+  font-size: 0.75rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+/* ── Lesson card done state ─────────────────────────── */
+.lesson-card-btn.done {
+  border-color: var(--accent);
+  opacity: 0.75;
+}
+
+.lesson-done-icon {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.lesson-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+}

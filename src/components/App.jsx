@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import { BookOpen, BarChart3, MessageSquare } from 'lucide-react';
+import { BookOpen, BarChart3 } from 'lucide-react';
 import Layout from './Layout';
 import Login from './Login';
 import LessonFlow from './LessonPage/LessonFlow';
 import EmployeeDashboard from './Dashboard/EmployeeDashboard';
 import ManagerDashboard from './Dashboard/ManagerDashboard';
-import ClosingTrainer from './ClosingTrainer/ClosingTrainer';
 import { useAuth } from '../hooks/useAuth';
 import { useLesson } from '../hooks/useLesson';
 import { useLessons } from '../hooks/useLessons';
@@ -38,10 +37,6 @@ export default function App() {
           onClick={() => setView('lesson')} type="button">
           <BookOpen size={18} /> Lesson
         </button>
-        <button className={view === 'closing' ? 'active' : ''}
-          onClick={() => setView('closing')} type="button">
-          <MessageSquare size={18} /> Closing
-        </button>
       </nav>
 
       {view === 'lesson' && (
@@ -55,8 +50,6 @@ export default function App() {
           employeeStats={employeeStats}
         />
       )}
-
-      {view === 'closing' && <ClosingTrainer user={user} />}
 
       {view === 'dashboard' && (
         isManager
