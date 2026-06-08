@@ -124,7 +124,9 @@ export function useDashboard(user) {
   }, [loadManagerData]);
 
   // ── 매니저 통계: localStorage + Supabase 병합 ─────────────
-  const localEmps = buildLocalEmployees(localResults, localSessions);
+  // 현재 로그인한 매니저 본인은 직원 목록에서 제외
+  const localEmps = buildLocalEmployees(localResults, localSessions)
+    .filter((emp) => emp.name !== user?.name);
   const mergedEmployees = mergeEmployees(supabaseEmployees, localEmps);
 
   const managerStats = calculateManagerStats({
