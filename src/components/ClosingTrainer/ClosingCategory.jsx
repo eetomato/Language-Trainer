@@ -64,6 +64,7 @@ export default function ClosingCategory({ category, onBack, onComplete }) {
   const [choiceResult, setChoiceResult] = useState(null);
   const [typedAnswer, setTypedAnswer] = useState('');
   const [typeResult, setTypeResult] = useState(null); // 'correct' | 'wrong' | null
+  const [said4, setSaid4] = useState(0);
 
   const expr = expressions[exprIndex];
   const isLast = exprIndex === expressions.length - 1;
@@ -80,6 +81,7 @@ export default function ClosingCategory({ category, onBack, onComplete }) {
       setChoiceResult(null);
       setTypedAnswer('');
       setTypeResult(null);
+      setSaid4(0);
     }
   };
 
@@ -140,27 +142,33 @@ export default function ClosingCategory({ category, onBack, onComplete }) {
       {/* Step 4 */}
       {step === 4 && (
         <div className="closing-step">
-          <p className="closing-step-label">Step 4 — In context</p>
-          <div className="closing-dialogue">
-            <div className="dialogue-line staff">
-              <span className="dialogue-role">Staff</span>
-              <div className="dialogue-content">
-                <span>{expr.text}</span>
-                <button className="tts-inline" type="button" onClick={() => speak(expr.text)}>
-                  <Volume2 size={14} />
-                </button>
-                <span className="dialogue-translation">{expr.translation}</span>
-              </div>
-            </div>
-            <div className="dialogue-line customer">
-              <span className="dialogue-role">Customer</span>
-              <div className="dialogue-content">
-                <span>Thank you. I&apos;ll come again.</span>
-                <span className="dialogue-translation">ありがとうございます。またお伺いします。</span>
-              </div>
-            </div>
+          <p className="closing-step-label">STEP 4 — In Context</p>
+          <div className="closing-context">
+            <p className="context-line staff"><span>Staff</span> {expr.text}</p>
+            <p className="context-line staff-jp" style={{ fontSize: '0.8rem', color: 'var(--muted)', marginLeft: '3rem' }}>{expr.translation}</p>
+            <p className="context-line customer"><span>Customer</span> Thank you. I&apos;ll come again.</p>
+            <p className="context-line customer-jp" style={{ fontSize: '0.8rem', color: 'var(--muted)', marginLeft: '5rem' }}>ありがとうございます。またお伺いします。</p>
           </div>
-          <StepNav onPrev={() => setStep(3)} onNext={() => { setStep(5); resetTypeStep(); }} />
+
+          <div style={{ marginTop: 24 }}>
+            <p className="closing-step-label">Say it out loud ({said4}/3)</p>
+            <button
+              type="button"
+              className="primary-action compact"
+              style={{ width: '100%', marginBottom: 12 }}
+              onClick={() => {
+                speak(expr.text);
+                setSaid4((n) => Math.min(n + 1, 3));
+              }}
+            >
+              🔊 I said it ({said4}/3)
+            </button>
+          </div>
+
+          <StepNav
+            onPrev={() => { setStep(3); setSaid4(0); }}
+            onNext={said4 >= 3 ? () => { setStep(5); resetTypeStep(); } : null}
+          />
         </div>
       )}
 
