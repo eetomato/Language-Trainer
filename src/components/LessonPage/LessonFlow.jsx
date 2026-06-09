@@ -32,9 +32,9 @@ function LessonHub({ onSelectVideo, onSelectClosing, onSelectTest }) {
 
         <button type="button" className="lesson-hub-card" onClick={onSelectClosing}>
           <span className="hub-icon">💬</span>
-          <h3>Closing Trainer</h3>
-          <p>接客トレーニング</p>
-          <span className="hub-sub">クロージング表現を練習する<br/>Practice closing expressions</span>
+          <h3>Customer English</h3>
+          <p>お客様との英会話</p>
+          <span className="hub-sub">接客で使える英語表現を練習する<br/>Practice English with customers</span>
         </button>
 
         <button type="button" className="lesson-hub-card" onClick={onSelectTest}>

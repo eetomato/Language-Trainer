@@ -56,9 +56,9 @@ export default function ClosingTrainer({ user, saveSession }) {
   return (
     <div className="closing-trainer">
       <div className="closing-header">
-        <p className="eyebrow">Closing Trainer</p>
-        <h2>Closing Expressions</h2>
-        <p className="closing-subtitle">接客の締めくくりに使う英語表現を練習しましょう。</p>
+        <p className="eyebrow">Customer English</p>
+        <h2>接客で使える英語表現</h2>
+        <p className="closing-subtitle">カテゴリを選んで表現を練習しましょう。</p>
       </div>
 
       <div className="closing-grid">
