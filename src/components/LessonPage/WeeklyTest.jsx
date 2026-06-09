@@ -19,6 +19,16 @@ export default function WeeklyTest({ user, weekNumber, sentences, onComplete }) 
     });
     setResults(res);
     const wrong = res.filter((r) => !r.isCorrect).map((r) => r.sentence);
+    // 결과 저장
+    const testResults = JSON.parse(localStorage.getItem('nh_test_results') || '[]');
+    testResults.push({
+      week: weekNumber,
+      score: Math.round(((sentences.length - wrong.length) / sentences.length) * 100),
+      wrong,
+      date: new Date().toISOString(),
+      shown: false,
+    });
+    localStorage.setItem('nh_test_results', JSON.stringify(testResults));
     onComplete?.(wrong);
   };
 
