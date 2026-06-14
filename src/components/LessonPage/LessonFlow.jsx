@@ -5,6 +5,7 @@ import LessonList from './LessonList';
 import ReviewSection from './ReviewSection';
 import WeeklyTest from './WeeklyTest';
 import WeeklySheets from '../WeeklySheets/WeeklySheets';
+import { supabase } from '../../utils/supabaseClient';
 
 function toDateStr(isoStr) {
   return isoStr ? isoStr.slice(0, 10) : null;
@@ -52,10 +53,12 @@ export default function LessonFlow({
   user, lessons, latestLesson, lessonsLoading,
   submitAnswer, saveSession, employeeStats,
 }) {
-  const { completed, isLessonDone, isTestDone, markLessonComplete, markTestComplete } = useProgress(user);
+  const { completed, markLessonComplete, markTestComplete } = useProgress(user);
   const [mode, setMode] = useState('hub'); // 'hub' | 'sheets' | 'audio' | 'test' | 'video'
   const [selectedLesson, setSelectedLesson] = useState(null);
   const [reviewDone, setReviewDone] = useState(false);
+  const [testQuestions, setTestQuestions] = useState(null); // null = 로딩 전
+  const [testWeek, setTestWeek] = useState(null);
 
   const sorted = useMemo(() =>
     [...lessons].sort((a, b) =>
@@ -79,7 +82,24 @@ export default function LessonFlow({
       <LessonHub
         onSelectSheets={() => setMode('sheets')}
         onSelectAudio={() => setMode('audio')}
-        onSelectTest={() => setMode('test')}
+        onSelectTest={async () => {
+          setTestQuestions(null);
+          setMode('test');
+          if (!supabase) { setTestQuestions([]); return; }
+          const { data, error } = await supabase
+            .from('weekly_sheets')
+            .select('week_start_date, test_questions')
+            .eq('is_hidden', false)
+            .order('week_start_date', { ascending: false })
+            .limit(1)
+            .single();
+          if (!error && data) {
+            setTestQuestions(data.test_questions || []);
+            setTestWeek(data.week_start_date);
+          } else {
+            setTestQuestions([]);
+          }
+        }}
       />
     );
   }
@@ -119,17 +139,13 @@ export default function LessonFlow({
 
   // ── Weekly Test ────────────────────────────────────────────
   if (mode === 'test') {
-    const currentWeek = sorted.filter((l) => l.dayNumber !== 7).at(-1)?.weekNumber ?? 1;
-    const weekDays = sorted.filter((l) => l.weekNumber === currentWeek && l.dayNumber < 7);
-    const weekSentences = weekDays.flatMap((l) => l.sentences || []);
-
     return (
       <WeeklyTest
         user={user}
-        weekNumber={currentWeek}
-        sentences={weekSentences}
+        weekDate={testWeek}
+        testQuestions={testQuestions}
         onComplete={() => {
-          markTestComplete(currentWeek);
+          markTestComplete(testWeek);
           setMode('hub');
         }}
         onBack={() => setMode('hub')}
@@ -137,7 +153,7 @@ export default function LessonFlow({
     );
   }
 
-  // ── Video Lesson (레거시, 직접 접근 시) ────────────────────
+  // ── Video Lesson (레거시) ───────────────────────────────────
   const today = toDateStr(new Date().toISOString());
   const lastCompleted = completed.length > 0 ? completed[completed.length - 1] : null;
   const lastCompletedDate = lastCompleted ? toDateStr(lastCompleted.date) : null;
