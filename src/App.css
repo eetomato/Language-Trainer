@@ -1597,3 +1597,123 @@ button {
 .popup-wrong-item:last-child {
   border-bottom: none;
 }
+
+/* ── WeeklySheets ────────────────────────────────── */
+.ws-week-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.ws-week-tab {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1.5px solid var(--line);
+  background: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.ws-week-tab.active {
+  background: var(--ink);
+  color: #fff;
+  border-color: var(--ink);
+}
+
+.ws-situations {
+  padding: 0 16px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ws-situation-card {
+  background: var(--surface);
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: var(--shadow);
+}
+
+.ws-situation-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 14px;
+  color: var(--ink);
+}
+
+.ws-sentences {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ws-sentence-row {
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+
+.ws-sentence-row:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.ws-sentence-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.ws-sentence-text {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.5;
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.ws-chunk {
+  display: inline-block;
+}
+
+.ws-chunk-hint {
+  position: relative;
+  border-bottom: 2px dashed var(--accent);
+  cursor: pointer;
+}
+
+.ws-chunk-popup {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--ink);
+  color: #fff;
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.ws-translation {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.ws-pattern {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-top: 4px;
+}

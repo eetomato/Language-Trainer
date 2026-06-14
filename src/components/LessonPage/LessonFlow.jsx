@@ -4,14 +4,14 @@ import LessonPage from './LessonPage';
 import LessonList from './LessonList';
 import ReviewSection from './ReviewSection';
 import WeeklyTest from './WeeklyTest';
-import ClosingTrainer from '../ClosingTrainer/ClosingTrainer';
+import WeeklySheets from '../WeeklySheets/WeeklySheets';
 
 function toDateStr(isoStr) {
   return isoStr ? isoStr.slice(0, 10) : null;
 }
 
 // ── 허브 화면 ─────────────────────────────────────────────────
-function LessonHub({ onSelectVideo, onSelectClosing, onSelectTest }) {
+function LessonHub({ onSelectSheets, onSelectTest, onSelectAudio }) {
   return (
     <div className="lesson-page">
       <div className="lesson-hero">
@@ -23,18 +23,18 @@ function LessonHub({ onSelectVideo, onSelectClosing, onSelectTest }) {
       </div>
 
       <div className="lesson-hub-grid" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
-        <button type="button" className="lesson-hub-card" onClick={onSelectVideo}>
-          <span className="hub-icon">📹</span>
-          <h3>Video Lesson</h3>
-          <p>ビデオレッスン</p>
-          <span className="hub-sub">英語表現を動画で学ぶ<br/>Learn expressions from video</span>
-        </button>
-
-        <button type="button" className="lesson-hub-card" onClick={onSelectClosing}>
+        <button type="button" className="lesson-hub-card" onClick={onSelectSheets}>
           <span className="hub-icon">💬</span>
           <h3>Customer English</h3>
           <p>お客様との英会話</p>
           <span className="hub-sub">接客で使える英語表現を練習する<br/>Practice English with customers</span>
+        </button>
+
+        <button type="button" className="lesson-hub-card" onClick={onSelectAudio}>
+          <span className="hub-icon">🎧</span>
+          <h3>Audio Lesson</h3>
+          <p>オーディオレッスン</p>
+          <span className="hub-sub">音声で英語を学ぶ<br/>Learn English by listening</span>
         </button>
 
         <button type="button" className="lesson-hub-card" onClick={onSelectTest}>
@@ -53,7 +53,7 @@ export default function LessonFlow({
   submitAnswer, saveSession, employeeStats,
 }) {
   const { completed, isLessonDone, isTestDone, markLessonComplete, markTestComplete } = useProgress(user);
-  const [mode, setMode] = useState('hub'); // 'hub' | 'video' | 'closing' | 'test'
+  const [mode, setMode] = useState('hub'); // 'hub' | 'sheets' | 'audio' | 'test' | 'video'
   const [selectedLesson, setSelectedLesson] = useState(null);
   const [reviewDone, setReviewDone] = useState(false);
 
@@ -73,40 +73,46 @@ export default function LessonFlow({
     );
   }
 
-  // ── 복습 판단 (Video 모드 진입 시 공통 체크) ──────────────
-  const today = toDateStr(new Date().toISOString());
-  const lastCompleted = completed.length > 0 ? completed[completed.length - 1] : null;
-  const lastCompletedDate = lastCompleted ? toDateStr(lastCompleted.date) : null;
-  const lastCompletedLesson = lastCompleted
-    ? sorted.find((l) => l.id === lastCompleted.lessonId) ?? null
-    : null;
-
-  const isReviewPending = lastCompletedDate !== null
-    && lastCompletedDate !== today
-    && !!lastCompletedLesson
-    && !reviewDone;
-
   // ── 허브 ───────────────────────────────────────────────────
   if (mode === 'hub') {
     return (
       <LessonHub
-        onSelectVideo={() => setMode('video')}
-        onSelectClosing={() => setMode('closing')}
+        onSelectSheets={() => setMode('sheets')}
+        onSelectAudio={() => setMode('audio')}
         onSelectTest={() => setMode('test')}
       />
     );
   }
 
-  // ── Closing Trainer ────────────────────────────────────────
-  if (mode === 'closing') {
+  // ── Customer English (WeeklySheets) ───────────────────────
+  if (mode === 'sheets') {
     return (
-      <div>
-        <button type="button" className="back-btn"
-          style={{ margin: '16px 16px 0' }}
-          onClick={() => setMode('hub')}>
-          ← Back / 戻る
-        </button>
-        <ClosingTrainer user={user} saveSession={saveSession} />
+      <WeeklySheets
+        user={user}
+        saveSession={saveSession}
+        onBack={() => setMode('hub')}
+      />
+    );
+  }
+
+  // ── Audio Lesson (Coming soon) ─────────────────────────────
+  if (mode === 'audio') {
+    return (
+      <div className="lesson-page">
+        <div className="lesson-hero">
+          <div>
+            <button type="button" className="back-btn" onClick={() => setMode('hub')}>
+              ← Back / 戻る
+            </button>
+            <p className="eyebrow">Audio Lesson</p>
+            <h2>オーディオレッスン</h2>
+          </div>
+        </div>
+        <div style={{ padding: '40px 24px', textAlign: 'center', color: 'var(--muted)' }}>
+          <p style={{ fontSize: '2rem', marginBottom: 12 }}>🎧</p>
+          <p style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: 8 }}>Coming soon</p>
+          <p style={{ fontSize: '0.9rem' }}>準備中です。もうしばらくお待ちください。</p>
+        </div>
       </div>
     );
   }
@@ -131,9 +137,19 @@ export default function LessonFlow({
     );
   }
 
-  // ── Video Lesson ───────────────────────────────────────────
+  // ── Video Lesson (레거시, 직접 접근 시) ────────────────────
+  const today = toDateStr(new Date().toISOString());
+  const lastCompleted = completed.length > 0 ? completed[completed.length - 1] : null;
+  const lastCompletedDate = lastCompleted ? toDateStr(lastCompleted.date) : null;
+  const lastCompletedLesson = lastCompleted
+    ? sorted.find((l) => l.id === lastCompleted.lessonId) ?? null
+    : null;
 
-  // 복습이 남아 있으면 먼저 표시
+  const isReviewPending = lastCompletedDate !== null
+    && lastCompletedDate !== today
+    && !!lastCompletedLesson
+    && !reviewDone;
+
   if (isReviewPending && !selectedLesson) {
     return (
       <ReviewSection
@@ -145,10 +161,8 @@ export default function LessonFlow({
     );
   }
 
-  // 레슨이 1개면 목록 없이 바로 자동 선택
   if (!selectedLesson) {
     if (sorted.length === 1) {
-      // 다음 렌더에서 바로 LessonPage로 진입
       return (
         <LessonPage
           user={user}
