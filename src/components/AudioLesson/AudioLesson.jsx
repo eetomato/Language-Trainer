@@ -3,24 +3,29 @@ import { Volume2, Play, Square } from 'lucide-react';
 import { supabase } from '../../utils/supabaseClient';
 
 // ── TTS ────────────────────────────────────────────────────
-function getVoice(role) {
-  const voices = window.speechSynthesis?.getVoices() || [];
-  const staffNames = ['Daniel', 'Google UK English Male', 'Rishi'];
-  const customerNames = ['Aaron', 'Google US English', 'Samantha', 'Karen'];
-  const preferred = role === 'Staff' ? staffNames : customerNames;
-  return preferred.map((n) => voices.find((v) => v.name === n)).find(Boolean) ?? null;
-}
+function speak(text, role) {
+  if (!window.speechSynthesis) return Promise.resolve();
+  window.speechSynthesis.cancel();
 
-function speakLine(text, role) {
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = 'en-US';
+  utt.rate = 0.85;
+
+  const voices = window.speechSynthesis.getVoices();
+  const staffPreferred = ['Daniel', 'Rishi', 'Google UK English Male', 'Arthur'];
+  const customerPreferred = ['Aaron', 'Fred', 'Google US English', 'Alex', 'Samantha'];
+
+  const preferred = role === 'staff' ? staffPreferred : customerPreferred;
+  const found = preferred.map((name) => voices.find((v) => v.name === name)).find(Boolean);
+
+  if (found) {
+    utt.voice = found;
+  } else {
+    utt.pitch = role === 'staff' ? 0.8 : 1.1;
+    utt.rate = role === 'staff' ? 0.8 : 0.9;
+  }
+
   return new Promise((resolve) => {
-    if (!window.speechSynthesis) { resolve(); return; }
-    window.speechSynthesis.cancel();
-    const utt = new SpeechSynthesisUtterance(text);
-    utt.lang = 'en-US';
-    utt.rate = 0.85;
-    utt.pitch = 1.0;
-    const voice = getVoice(role);
-    if (voice) utt.voice = voice;
     utt.onend = resolve;
     utt.onerror = resolve;
     window.speechSynthesis.speak(utt);
@@ -48,7 +53,7 @@ function DialogueView({ situation, onBack }) {
     for (let i = 0; i < lines.length; i++) {
       if (stopRef.current) break;
       setActiveIdx(i);
-      await speakLine(lines[i].text, lines[i].role);
+      await speak(lines[i].text, lines[i].role === 'Staff' ? 'staff' : 'customer');
       await new Promise((r) => setTimeout(r, 300));
     }
     setPlaying(false);
@@ -59,7 +64,7 @@ function DialogueView({ situation, onBack }) {
     stopAll();
     setTimeout(() => {
       stopRef.current = false;
-      speakLine(line.text, line.role);
+      speak(line.text, line.role === 'Staff' ? 'staff' : 'customer');
     }, 50);
   };
 
