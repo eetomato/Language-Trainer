@@ -5,7 +5,6 @@ import { supabase } from '../utils/supabaseClient';
 const RESULTS_KEY = 'nh_menswear_results';
 const SESSIONS_KEY = 'nh_menswear_sessions';
 
-// localStorage 데이터를 calculateManagerStats 형식으로 변환
 function buildLocalEmployees(localResults, localSessions) {
   const empMap = {};
 
@@ -38,23 +37,18 @@ function buildLocalEmployees(localResults, localSessions) {
   return Object.values(empMap);
 }
 
-// Supabase + localStorage 직원 데이터 병합
-// localStorage 우선 (더 빠름), Supabase에 없는 직원도 포함
 function mergeEmployees(supabaseEmps, localEmps) {
   const merged = {};
 
-  // Supabase 데이터 기준으로 먼저 채움
   supabaseEmps.forEach((emp) => {
     merged[emp.name] = { ...emp };
   });
 
-  // localStorage 데이터로 덮어쓰기/추가 (더 최신)
   localEmps.forEach((emp) => {
     if (merged[emp.name]) {
-      // 기존 Supabase 데이터에 localStorage 데이터 합산
       merged[emp.name] = {
         ...merged[emp.name],
-        results: emp.results,   // localStorage가 더 최신
+        results: emp.results,
         sessions: emp.sessions,
         store_name: merged[emp.name].store_name || emp.store_name,
       };
@@ -66,12 +60,31 @@ function mergeEmployees(supabaseEmps, localEmps) {
   return Object.values(merged);
 }
 
+// Supabase results/sessions → calculateEmployeeStats 형식으로 변환
+function buildEmployeeStatsFromSupabase(user, sbResults, sbSessions) {
+  const results = sbResults.map((r) => ({
+    employeeName: user.name,
+    isCorrect: r.is_correct,
+    date: r.attempted_date || r.created_at,
+    expectedAnswer: r.expected_answer || '',
+  }));
+
+  const sessions = sbSessions.map((s) => ({
+    employeeName: user.name,
+    studyMinutes: s.study_minutes || 0,
+    date: s.date || s.created_at,
+  }));
+
+  return calculateEmployeeStats(user, results, sessions);
+}
+
 export function useDashboard(user) {
   const [localResults, setLocalResults] = useState([]);
   const [localSessions, setLocalSessions] = useState([]);
   const [supabaseEmployees, setSupabaseEmployees] = useState([]);
   const [supabaseMistakes, setSupabaseMistakes] = useState([]);
   const [supabaseStores, setSupabaseStores] = useState([]);
+  const [employeeStats, setEmployeeStats] = useState(null);
 
   // ── localStorage 실시간 폴링 (500ms) ──────────────────────
   useEffect(() => {
@@ -90,7 +103,58 @@ export function useDashboard(user) {
     };
   }, []);
 
-  // ── Supabase 폴링 (30초) ──────────────────────────────────
+  // ── Employee: Supabase 기반 통계 로드 ─────────────────────
+  const loadEmployeeStats = useCallback(async () => {
+    if (!supabase || !user || user.role === 'manager') return;
+
+    try {
+      // 1. name → employee id 조회
+      const { data: empData, error: empErr } = await supabase
+        .from('employees')
+        .select('id')
+        .eq('name', user.name)
+        .single();
+
+      if (empErr || !empData) throw new Error('employee not found');
+
+      const empId = empData.id;
+
+      // 2. results + sessions 병렬 조회
+      const [{ data: sbResults }, { data: sbSessions }] = await Promise.all([
+        supabase
+          .from('results')
+          .select('is_correct, expected_answer, attempted_date, created_at')
+          .eq('employee_id', empId),
+        supabase
+          .from('sessions')
+          .select('study_minutes, date, created_at')
+          .eq('employee_id', empId),
+      ]);
+
+      setEmployeeStats(
+        buildEmployeeStatsFromSupabase(user, sbResults || [], sbSessions || [])
+      );
+    } catch (e) {
+      console.warn('[useDashboard] Supabase employee stats 실패, localStorage fallback', e.message);
+      // fallback: localStorage
+      setEmployeeStats(calculateEmployeeStats(user, localResults, localSessions));
+    }
+  }, [user?.name, user?.role]);
+
+  useEffect(() => {
+    loadEmployeeStats();
+    const timer = window.setInterval(loadEmployeeStats, 30000);
+    return () => window.clearInterval(timer);
+  }, [loadEmployeeStats]);
+
+  // localStorage 변경 시 employee stats 재계산 (Supabase 실패 대비)
+  useEffect(() => {
+    if (employeeStats === null && user && user.role !== 'manager') {
+      setEmployeeStats(calculateEmployeeStats(user, localResults, localSessions));
+    }
+  }, [localResults, localSessions]);
+
+  // ── Manager: Supabase 폴링 (30초) ─────────────────────────
   const loadManagerData = useCallback(async () => {
     if (!supabase || user?.role !== 'manager') return;
     try {
@@ -113,7 +177,7 @@ export function useDashboard(user) {
       if (mistakes) setSupabaseMistakes(mistakes);
       if (stores) setSupabaseStores(stores);
     } catch (e) {
-      console.warn('[useDashboard] Supabase 로드 실패', e.message);
+      console.warn('[useDashboard] Supabase 매니저 로드 실패', e.message);
     }
   }, [user?.role]);
 
@@ -124,13 +188,9 @@ export function useDashboard(user) {
   }, [loadManagerData]);
 
   // ── 매니저 통계: localStorage + Supabase 병합 ─────────────
-  // Supabase에서 매니저 role인 이름 목록 수집
   const managerNames = new Set(
-    supabaseEmployees
-      .filter((e) => e.role === 'manager')
-      .map((e) => e.name)
+    supabaseEmployees.filter((e) => e.role === 'manager').map((e) => e.name)
   );
-  // 현재 로그인한 사용자 + Supabase 매니저 제외
   const localEmps = buildLocalEmployees(localResults, localSessions)
     .filter((emp) => emp.name !== user?.name && !managerNames.has(emp.name));
   const mergedEmployees = mergeEmployees(supabaseEmployees, localEmps);
@@ -141,8 +201,12 @@ export function useDashboard(user) {
     stores: supabaseStores,
   });
 
+  // employeeStats가 아직 null이면 localStorage로 즉시 계산해서 반환
+  const finalEmployeeStats = employeeStats
+    ?? calculateEmployeeStats(user, localResults, localSessions);
+
   return {
-    employeeStats: calculateEmployeeStats(user, localResults, localSessions),
+    employeeStats: finalEmployeeStats,
     managerStats,
   };
 }
