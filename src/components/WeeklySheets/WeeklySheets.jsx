@@ -34,41 +34,50 @@ function ChunkWord({ text, meaning }) {
 }
 
 function SentenceRow({ sentence }) {
-  // chunks/chunk_meanings(object) 또는 chunk/chunk_meaning(단수) 양쪽 지원
-  const chunks = sentence.chunks
-    || (sentence.chunk ? [sentence.chunk] : []);
-  const chunkMeanings = sentence.chunk_meanings
-    || (sentence.chunk && sentence.chunk_meaning
-      ? { [sentence.chunk]: sentence.chunk_meaning }
-      : {});
+  const { text, translation, chunk, chunk_meaning, pattern } = sentence;
+
+  // chunk가 text 안에 있으면 인라인 하이라이트, 아니면 text 전체 표시
+  let textContent;
+  if (chunk && text && text.includes(chunk)) {
+    const parts = text.split(chunk);
+    textContent = parts.map((part, i) => (
+      <span key={i}>
+        {part}
+        {i < parts.length - 1 && (
+          <ChunkWord text={chunk} meaning={chunk_meaning} />
+        )}
+      </span>
+    ));
+  } else {
+    textContent = <span>{text}</span>;
+  }
 
   return (
     <div className="ws-sentence-row">
       <div className="ws-sentence-top">
-        <div className="ws-sentence-text">
-          {chunks.length > 0
-            ? chunks.map((c, i) => (
-                <ChunkWord key={i} text={c} meaning={chunkMeanings[c]} />
-              ))
-            : <span>{sentence.text}</span>
-          }
-        </div>
+        <div className="ws-sentence-text">{textContent}</div>
         <button
           type="button"
           className="tts-btn"
-          onClick={() => speak(sentence.text)}
+          onClick={() => speak(text)}
           aria-label="Listen"
         >
           <Volume2 size={16} />
         </button>
       </div>
-      {sentence.translation && (
-        <p className="ws-translation">{sentence.translation}</p>
+      {translation && (
+        <p className="ws-translation">{translation}</p>
       )}
-      {sentence.pattern && (
+      {/* chunk가 text에 없는 경우 별도 표시 */}
+      {chunk && text && !text.includes(chunk) && (
+        <p className="ws-chunk-note">
+          <ChunkWord text={chunk} meaning={chunk_meaning} />
+        </p>
+      )}
+      {pattern && (
         <p className="ws-pattern">
           <span className="pattern-label">Pattern: </span>
-          {sentence.pattern}
+          {pattern}
         </p>
       )}
     </div>
@@ -96,7 +105,8 @@ function SituationCard({ situation }) {
 }
 
 function WeekDetail({ sheets, weekDate, onBack }) {
-  const situations = sheets.filter((s) => s.week_start_date === weekDate);
+  const sheet = sheets.find((s) => s.week_start_date === weekDate);
+  const situations = sheet?.situations || [];
   return (
     <div className="lesson-page">
       <section className="lesson-hero">
@@ -109,8 +119,8 @@ function WeekDetail({ sheets, weekDate, onBack }) {
         </div>
       </section>
       <div className="ws-situations">
-        {situations.map((sit) => (
-          <SituationCard key={sit.id} situation={sit} />
+        {situations.map((sit, i) => (
+          <SituationCard key={i} situation={sit} />
         ))}
       </div>
     </div>
@@ -179,7 +189,8 @@ export default function WeeklySheets({ user, saveSession, onBack }) {
       {!loading && weekDates.length > 0 && (
         <div className="ws-week-cards">
           {weekDates.map((date) => {
-            const count = sheets.filter((s) => s.week_start_date === date).length;
+            const sheet = sheets.find((s) => s.week_start_date === date);
+            const count = (sheet?.situations || []).length;
             return (
               <button
                 key={date}
