@@ -5,9 +5,26 @@ import { supabase } from '../../utils/supabaseClient';
 function speak(text) {
   if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
+
   const utt = new SpeechSynthesisUtterance(text);
   utt.lang = 'en-US';
-  utt.rate = 0.9;
+  utt.rate = 0.85;
+  utt.pitch = 1.0;
+
+  // 자연스러운 영어 목소리 우선순위로 선택
+  const voices = window.speechSynthesis.getVoices();
+  const preferred = [
+    'Samantha', 'Karen', 'Daniel', 'Moira',  // Mac
+    'Google US English', 'Google UK English Female',  // Chrome
+    'Microsoft Aria', 'Microsoft Jenny',  // Windows
+  ];
+
+  const found = preferred
+    .map(name => voices.find(v => v.name === name))
+    .find(Boolean);
+
+  if (found) utt.voice = found;
+
   window.speechSynthesis.speak(utt);
 }
 
