@@ -1765,3 +1765,147 @@ button {
   margin-top: 6px;
   font-size: 0.85rem;
 }
+
+/* ── Audio Lesson ────────────────────────────────── */
+.al-situation-list {
+  padding: 0 16px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.al-situation-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-radius: 14px;
+  padding: 18px 20px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.al-situation-card:hover {
+  border-color: var(--ink);
+  box-shadow: var(--shadow);
+}
+
+.al-situation-num {
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-weight: 600;
+  min-width: 24px;
+}
+
+.al-situation-title {
+  flex: 1;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.al-situation-icon {
+  color: var(--muted);
+}
+
+.al-toolbar {
+  padding: 0 16px 16px;
+}
+
+.al-play-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--ink);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.al-play-btn.playing {
+  background: var(--warning);
+}
+
+.al-play-btn:hover {
+  opacity: 0.85;
+}
+
+.al-dialogue {
+  padding: 0 16px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.al-line {
+  border-radius: 14px;
+  padding: 14px 16px;
+  transition: background 0.2s;
+}
+
+.al-staff {
+  background: #FFF3EE;
+  border-left: 3px solid var(--accent);
+}
+
+.al-customer {
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+}
+
+.al-active {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.al-line-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.al-role {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.al-staff .al-role {
+  color: var(--accent);
+}
+
+.al-tts-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  padding: 2px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.al-tts-btn:hover {
+  color: var(--ink);
+}
+
+.al-text {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.5;
+}
+
+.al-translation {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-top: 4px;
+}

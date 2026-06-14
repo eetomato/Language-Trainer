@@ -5,6 +5,7 @@ import LessonList from './LessonList';
 import ReviewSection from './ReviewSection';
 import WeeklyTest from './WeeklyTest';
 import WeeklySheets from '../WeeklySheets/WeeklySheets';
+import AudioLesson from '../AudioLesson/AudioLesson';
 import { supabase } from '../../utils/supabaseClient';
 
 function toDateStr(isoStr) {
@@ -115,26 +116,9 @@ export default function LessonFlow({
     );
   }
 
-  // ── Audio Lesson (Coming soon) ─────────────────────────────
+  // ── Audio Lesson ───────────────────────────────────────────
   if (mode === 'audio') {
-    return (
-      <div className="lesson-page">
-        <div className="lesson-hero">
-          <div>
-            <button type="button" className="back-btn" onClick={() => setMode('hub')}>
-              ← Back / 戻る
-            </button>
-            <p className="eyebrow">Audio Lesson</p>
-            <h2>オーディオレッスン</h2>
-          </div>
-        </div>
-        <div style={{ padding: '40px 24px', textAlign: 'center', color: 'var(--muted)' }}>
-          <p style={{ fontSize: '2rem', marginBottom: 12 }}>🎧</p>
-          <p style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: 8 }}>Coming soon</p>
-          <p style={{ fontSize: '0.9rem' }}>準備中です。もうしばらくお待ちください。</p>
-        </div>
-      </div>
-    );
+    return <AudioLesson onBack={() => setMode('hub')} />;
   }
 
   // ── Weekly Test ────────────────────────────────────────────
