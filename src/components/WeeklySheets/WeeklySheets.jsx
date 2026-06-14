@@ -11,7 +11,6 @@ function speak(text) {
   window.speechSynthesis.speak(utt);
 }
 
-// 주차 탭 레이블 생성 (week_start_date 기준)
 function weekLabel(dateStr) {
   if (!dateStr) return '—';
   const d = new Date(dateStr);
@@ -20,7 +19,6 @@ function weekLabel(dateStr) {
   return `${m}/${day}〜`;
 }
 
-// 청크 클릭 시 뜻 팝업
 function ChunkWord({ text, meaning }) {
   const [open, setOpen] = useState(false);
   if (!meaning) return <span className="ws-chunk">{text}</span>;
@@ -35,10 +33,14 @@ function ChunkWord({ text, meaning }) {
   );
 }
 
-// 문장 카드
 function SentenceRow({ sentence }) {
-  const chunks = sentence.chunks || [];
-  const chunkMeanings = sentence.chunk_meanings || {};
+  // chunks/chunk_meanings(object) 또는 chunk/chunk_meaning(단수) 양쪽 지원
+  const chunks = sentence.chunks
+    || (sentence.chunk ? [sentence.chunk] : []);
+  const chunkMeanings = sentence.chunk_meanings
+    || (sentence.chunk && sentence.chunk_meaning
+      ? { [sentence.chunk]: sentence.chunk_meaning }
+      : {});
 
   return (
     <div className="ws-sentence-row">
@@ -73,12 +75,17 @@ function SentenceRow({ sentence }) {
   );
 }
 
-// Situation 카드
 function SituationCard({ situation }) {
   const sentences = situation.sentences || [];
   return (
     <div className="ws-situation-card">
       <p className="ws-situation-title">{situation.title}</p>
+      {situation.pattern && (
+        <p className="ws-situation-pattern">
+          <span className="pattern-label">Pattern: </span>
+          {situation.pattern}
+        </p>
+      )}
       <div className="ws-sentences">
         {sentences.map((s, i) => (
           <SentenceRow key={i} sentence={s} />
@@ -88,10 +95,32 @@ function SituationCard({ situation }) {
   );
 }
 
+function WeekDetail({ sheets, weekDate, onBack }) {
+  const situations = sheets.filter((s) => s.week_start_date === weekDate);
+  return (
+    <div className="lesson-page">
+      <section className="lesson-hero">
+        <div>
+          <button type="button" className="back-btn" onClick={onBack}>
+            ← Back / 戻る
+          </button>
+          <p className="eyebrow">Week of {weekLabel(weekDate)}</p>
+          <h2>接客で使える英語表現</h2>
+        </div>
+      </section>
+      <div className="ws-situations">
+        {situations.map((sit) => (
+          <SituationCard key={sit.id} situation={sit} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function WeeklySheets({ user, saveSession, onBack }) {
   const [sheets, setSheets] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeWeek, setActiveWeek] = useState(null);
+  const [selectedSheet, setSelectedSheet] = useState(null); // null = 목록, date string = 상세
 
   useEffect(() => {
     if (!supabase) { setLoading(false); return; }
@@ -101,17 +130,24 @@ export default function WeeklySheets({ user, saveSession, onBack }) {
       .eq('is_hidden', false)
       .order('week_start_date', { ascending: false })
       .then(({ data, error }) => {
-        if (!error && data) {
-          setSheets(data);
-          if (data.length > 0) setActiveWeek(data[0].week_start_date);
-        }
+        if (!error && data) setSheets(data);
         setLoading(false);
       });
   }, []);
 
-  // 탭별 그룹: week_start_date → situations[]
+  // 상세 화면
+  if (selectedSheet) {
+    return (
+      <WeekDetail
+        sheets={sheets}
+        weekDate={selectedSheet}
+        onBack={() => setSelectedSheet(null)}
+      />
+    );
+  }
+
+  // 주차 카드 목록
   const weekDates = [...new Set(sheets.map((s) => s.week_start_date))];
-  const activeSituations = sheets.filter((s) => s.week_start_date === activeWeek);
 
   return (
     <div className="lesson-page">
@@ -140,29 +176,23 @@ export default function WeeklySheets({ user, saveSession, onBack }) {
         </div>
       )}
 
-      {!loading && sheets.length > 0 && (
-        <>
-          {/* 주차 탭 */}
-          <div className="ws-week-tabs">
-            {weekDates.map((date) => (
+      {!loading && weekDates.length > 0 && (
+        <div className="ws-week-cards">
+          {weekDates.map((date) => {
+            const count = sheets.filter((s) => s.week_start_date === date).length;
+            return (
               <button
                 key={date}
                 type="button"
-                className={`ws-week-tab ${activeWeek === date ? 'active' : ''}`}
-                onClick={() => setActiveWeek(date)}
+                className="ws-week-card"
+                onClick={() => setSelectedSheet(date)}
               >
-                {weekLabel(date)}
+                <span className="ws-week-card-label">{weekLabel(date)}</span>
+                <span className="ws-week-card-count">{count} situations</span>
               </button>
-            ))}
-          </div>
-
-          {/* Situation 목록 */}
-          <div className="ws-situations">
-            {activeSituations.map((sit) => (
-              <SituationCard key={sit.id} situation={sit} />
-            ))}
-          </div>
-        </>
+            );
+          })}
+        </div>
       )}
     </div>
   );
