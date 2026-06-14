@@ -1717,3 +1717,51 @@ button {
   color: var(--muted);
   margin-top: 4px;
 }
+
+.ws-week-cards {
+  padding: 0 16px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ws-week-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-radius: 14px;
+  padding: 18px 20px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.ws-week-card:hover {
+  border-color: var(--ink);
+  box-shadow: var(--shadow);
+}
+
+.ws-week-card-label {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.ws-week-card-count {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.ws-situation-pattern {
+  font-size: 0.85rem;
+  color: var(--accent);
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.ws-chunk-note {
+  margin-top: 6px;
+  font-size: 0.85rem;
+}
