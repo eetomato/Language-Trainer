@@ -1640,6 +1640,26 @@ button {
   box-shadow: var(--shadow);
 }
 
+.ws-situation-card-btn {
+  cursor: pointer;
+  transition: box-shadow 0.15s, transform 0.1s;
+}
+
+.ws-situation-card-btn:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.13);
+  transform: translateY(-1px);
+}
+
+.sort-sit-heading {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+  margin-bottom: 12px;
+  padding: 0 2px;
+}
+
 .ws-situation-title {
   font-size: 1rem;
   font-weight: 700;

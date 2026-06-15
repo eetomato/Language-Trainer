@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Volume2, BookOpen, Shuffle } from 'lucide-react';
+import { Volume2, BookOpen, LayoutList } from 'lucide-react';
 import { supabase } from '../../utils/supabaseClient';
 
 function speak(text) {
@@ -29,12 +29,10 @@ function speak(text) {
 function weekLabel(dateStr) {
   if (!dateStr) return '—';
   const d = new Date(dateStr);
-  const m = d.getMonth() + 1;
-  const day = d.getDate();
-  return `${m}/${day}〜`;
+  return `${d.getMonth() + 1}/${d.getDate()}〜`;
 }
 
-// ── 学習タブ ──────────────────────────────────────────────────
+// ── Study tab ─────────────────────────────────────────────────
 
 function ChunkWord({ text, meaning }) {
   const [open, setOpen] = useState(false);
@@ -119,7 +117,7 @@ function SituationCard({ situation }) {
   );
 }
 
-// ── 並べ替えタブ ───────────────────────────────────────────────
+// ── Arrange tab ───────────────────────────────────────────────
 
 function shuffle(arr) {
   const a = [...arr];
@@ -180,7 +178,7 @@ function SortingQuestion({ sentence, onNext }) {
 
       <div className={`sort-placed-area${status === 'correct' ? ' sort-correct' : ''}${status === 'wrong' ? ' sort-wrong' : ''}`}>
         {placed.length === 0 ? (
-          <span className="sort-placeholder">ここにチャンクを並べる</span>
+          <span className="sort-placeholder">Place chunks here</span>
         ) : (
           placed.map((item) => (
             <button
@@ -210,13 +208,13 @@ function SortingQuestion({ sentence, onNext }) {
       </div>
 
       {status === 'correct' && (
-        <p className="sort-feedback sort-feedback-correct">✓ 正解！</p>
+        <p className="sort-feedback sort-feedback-correct">✓ Correct!</p>
       )}
       {status === 'wrong' && (
         <div style={{ marginTop: 12 }}>
-          <p className="sort-feedback sort-feedback-wrong">✗ もう一度試してください</p>
+          <p className="sort-feedback sort-feedback-wrong">✗ Not quite — try again</p>
           <button type="button" className="secondary-action" style={{ marginTop: 10 }} onClick={reset}>
-            リセット
+            Reset
           </button>
         </div>
       )}
@@ -230,24 +228,37 @@ function SortingExercise({ situations }) {
   const [score, setScore] = useState({ correct: 0, total: 0 });
   const [done, setDone] = useState(false);
 
+  // Situation select screen — same ws-situation-card style as Study tab
   if (selectedSit === null) {
     return (
-      <div className="sort-sit-list">
-        <p className="sort-sit-heading">シチュエーションを選んでください</p>
+      <div className="ws-situations">
+        <p className="sort-sit-heading">Choose a situation</p>
         {situations.map((sit, i) => (
-          <button
+          <div
             key={i}
-            type="button"
-            className="sort-sit-btn"
+            className="ws-situation-card ws-situation-card-btn"
+            role="button"
+            tabIndex={0}
             onClick={() => {
               setSelectedSit(i);
               setSentenceIdx(0);
               setScore({ correct: 0, total: 0 });
               setDone(false);
             }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                setSelectedSit(i);
+                setSentenceIdx(0);
+                setScore({ correct: 0, total: 0 });
+                setDone(false);
+              }
+            }}
           >
-            {sit.title || `Situation ${i + 1}`}
-          </button>
+            <p className="ws-situation-title">{sit.title || `Situation ${i + 1}`}</p>
+            <p style={{ fontSize: '0.82rem', color: 'var(--muted)', marginTop: 4 }}>
+              {(sit.sentences || []).filter((s) => s.text).length} sentences
+            </p>
+          </div>
         ))}
       </div>
     );
@@ -261,9 +272,9 @@ function SortingExercise({ situations }) {
     return (
       <div className="sort-result">
         <p className="sort-result-title">{sit.title}</p>
-        <p className="sort-result-score">{score.correct} / {score.total} 正解</p>
+        <p className="sort-result-score">{score.correct} / {score.total} correct</p>
         <p style={{ color: 'var(--muted)', fontSize: '0.9rem', marginBottom: 24 }}>
-          {score.correct === score.total ? '🎉 完璧！' : '📚 もう一度練習してみよう！'}
+          {score.correct === score.total ? '🎉 Perfect!' : '📚 Keep practicing!'}
         </p>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           <button
@@ -271,14 +282,14 @@ function SortingExercise({ situations }) {
             className="secondary-action"
             onClick={() => { setSentenceIdx(0); setScore({ correct: 0, total: 0 }); setDone(false); }}
           >
-            もう一度
+            Try again
           </button>
           <button
             type="button"
             className="secondary-action"
             onClick={() => setSelectedSit(null)}
           >
-            ← シチュエーション選択
+            ← Back to situations
           </button>
         </div>
       </div>
@@ -312,7 +323,7 @@ function SortingExercise({ situations }) {
   );
 }
 
-// ── WeekDetail (タブ付き) ──────────────────────────────────────
+// ── WeekDetail (with tabs) ────────────────────────────────────
 
 function WeekDetail({ sheets, weekDate, onBack }) {
   const sheet = sheets.find((s) => s.week_start_date === weekDate);
@@ -324,10 +335,10 @@ function WeekDetail({ sheets, weekDate, onBack }) {
       <section className="lesson-hero">
         <div>
           <button type="button" className="back-btn" onClick={onBack}>
-            ← Back / 戻る
+            ← Back
           </button>
           <p className="eyebrow">Week of {weekLabel(weekDate)}</p>
-          <h2>接客で使える英語表現</h2>
+          <h2>Customer English</h2>
         </div>
       </section>
 
@@ -344,7 +355,7 @@ function WeekDetail({ sheets, weekDate, onBack }) {
           className={`ws-tab${tab === 'sort' ? ' ws-tab-active' : ''}`}
           onClick={() => setTab('sort')}
         >
-          <Shuffle size={15} /> Reorder
+          <LayoutList size={15} /> Arrange
         </button>
       </div>
 
@@ -360,7 +371,7 @@ function WeekDetail({ sheets, weekDate, onBack }) {
         <div className="ws-sort-wrapper">
           {situations.length === 0 ? (
             <p style={{ padding: '40px 24px', textAlign: 'center', color: 'var(--muted)' }}>
-              準備中です
+              Coming soon
             </p>
           ) : (
             <SortingExercise situations={situations} />
@@ -408,10 +419,10 @@ export default function WeeklySheets({ user, saveSession, onBack }) {
       <section className="lesson-hero">
         <div>
           <button type="button" className="back-btn" onClick={onBack}>
-            ← Back / 戻る
+            ← Back
           </button>
           <p className="eyebrow">Customer English</p>
-          <h2>接客で使える英語表現</h2>
+          <h2>English for Retail Service</h2>
         </div>
       </section>
 
@@ -425,8 +436,8 @@ export default function WeeklySheets({ user, saveSession, onBack }) {
       {!loading && sheets.length === 0 && (
         <div style={{ padding: '40px 24px', textAlign: 'center', color: 'var(--muted)' }}>
           <p style={{ fontSize: '1.5rem', marginBottom: 8 }}>📋</p>
-          <p style={{ fontWeight: 600, marginBottom: 4 }}>準備中です</p>
-          <p style={{ fontSize: '0.9rem' }}>Coming soon — check back later!</p>
+          <p style={{ fontWeight: 600, marginBottom: 4 }}>Coming soon</p>
+          <p style={{ fontSize: '0.9rem' }}>Check back later!</p>
         </div>
       )}
 
