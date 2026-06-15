@@ -161,6 +161,7 @@ export default function LessonFlow({
         weekDate={testWeek}
         test1Questions={test1Questions}
         test2Questions={test2Questions}
+        saveSession={saveSession}
         onComplete={() => {
           markTestComplete(testWeek);
           setMode('hub');

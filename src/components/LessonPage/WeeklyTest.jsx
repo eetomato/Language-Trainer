@@ -152,7 +152,7 @@ function TestStage({ questions, stageLabel, stageTitle, nextLabel = '次へ', on
 }
 
 // ── 최종 결과 ─────────────────────────────────────────────────
-function FinalResult({ test1Results, test2Results, weekDate, user, onBack, onComplete }) {
+function FinalResult({ test1Results, test2Results, weekDate, user, startedAt, saveSession, onBack, onComplete }) {
   const allResults = [...test1Results, ...(test2Results || [])];
   const correct = allResults.filter((r) => r.isCorrect).length;
   const total = allResults.length;
@@ -161,6 +161,9 @@ function FinalResult({ test1Results, test2Results, weekDate, user, onBack, onCom
   const t2c = (test2Results || []).filter((r) => r.isCorrect).length;
 
   const handleComplete = async () => {
+    // 경과 시간 계산 (분 단위, 최소 1분)
+    const elapsedMinutes = Math.max(1, Math.round((Date.now() - startedAt) / 60000));
+
     // localStorage 저장
     const stored = JSON.parse(localStorage.getItem('nh_test_results') || '[]');
     stored.push({
@@ -175,7 +178,7 @@ function FinalResult({ test1Results, test2Results, weekDate, user, onBack, onCom
     });
     localStorage.setItem('nh_test_results', JSON.stringify(stored));
 
-    // Supabase 저장
+    // Supabase results + sessions 저장
     if (supabase && user) {
       try {
         const { data: emp } = await supabase
@@ -185,19 +188,29 @@ function FinalResult({ test1Results, test2Results, weekDate, user, onBack, onCom
           .single();
 
         if (emp?.id) {
-          await supabase.from('results').insert({
-            employee_id: emp.id,
-            question_type: 'weekly_test',
-            user_answer: `test1:${t1c}/${test1Results.length}, test2:${t2c}/${(test2Results || []).length}`,
-            expected_answer: weekDate || '',
-            is_correct: pct >= 80,
-            attempted_date: new Date().toISOString().slice(0, 10),
-          });
+          await Promise.all([
+            supabase.from('results').insert({
+              employee_id: emp.id,
+              question_type: 'weekly_test',
+              user_answer: `test1:${t1c}/${test1Results.length}, test2:${t2c}/${(test2Results || []).length}`,
+              expected_answer: weekDate || '',
+              is_correct: pct >= 80,
+              attempted_date: new Date().toISOString().slice(0, 10),
+            }),
+            supabase.from('sessions').insert({
+              employee_id: emp.id,
+              lesson_id: null,
+              study_minutes: elapsedMinutes,
+            }),
+          ]);
         }
       } catch (e) {
         console.warn('[WeeklyTest] Supabase 저장 실패', e.message);
       }
     }
+
+    // localStorage sessions에도 저장
+    saveSession?.({ lessonId: `weekly-test-${weekDate}`, studyMinutes: elapsedMinutes });
 
     onComplete?.();
   };
@@ -245,10 +258,11 @@ function FinalResult({ test1Results, test2Results, weekDate, user, onBack, onCom
 }
 
 // ── Main ──────────────────────────────────────────────────────
-export default function WeeklyTest({ user, weekDate, test1Questions, test2Questions, onComplete, onBack }) {
+export default function WeeklyTest({ user, weekDate, test1Questions, test2Questions, saveSession, onComplete, onBack }) {
   const [stage, setStage] = useState('test1'); // 'test1' | 'test2' | 'final'
   const [test1Results, setTest1Results] = useState(null);
   const [test2Results, setTest2Results] = useState(null);
+  const [startedAt] = useState(() => Date.now());
 
   // 로딩 중
   if (test1Questions === null) {
@@ -323,6 +337,8 @@ export default function WeeklyTest({ user, weekDate, test1Questions, test2Questi
       test2Results={test2Results || []}
       weekDate={weekDate}
       user={user}
+      startedAt={startedAt}
+      saveSession={saveSession}
       onBack={onBack}
       onComplete={onComplete}
     />
