@@ -283,6 +283,7 @@ export default function WeeklyTest({ user, weekDate, test1Questions, test2Questi
   if (stage === 'test1') {
     return (
       <TestStage
+        key="test1"
         questions={test1Questions || []}
         stageLabel={`Test 1${weekDate ? ` — ${weekLabel(weekDate)}` : ''}`}
         stageTitle="キーワード穴埋め"
@@ -303,6 +304,7 @@ export default function WeeklyTest({ user, weekDate, test1Questions, test2Questi
   if (stage === 'test2') {
     return (
       <TestStage
+        key="test2"
         questions={test2Questions || []}
         stageLabel="Test 2"
         stageTitle="チャンク穴埋め"
