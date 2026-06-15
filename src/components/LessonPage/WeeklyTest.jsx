@@ -51,7 +51,7 @@ function BlankSentence({ sentence, value, onChange, disabled }) {
 }
 
 // ── 단계별 테스트 (Test 1 / Test 2 공용) ─────────────────────
-function TestStage({ questions, stageLabel, stageTitle, onComplete }) {
+function TestStage({ questions, stageLabel, stageTitle, nextLabel = '次へ', onComplete }) {
   const [answers, setAnswers] = useState({});
   const [results, setResults] = useState(null);
 
@@ -101,7 +101,7 @@ function TestStage({ questions, stageLabel, stageTitle, onComplete }) {
             style={{ marginTop: 24 }}
             onClick={() => onComplete(results)}
           >
-            次へ <Check size={16} />
+            {nextLabel} <Check size={16} />
           </button>
         </section>
       </div>
@@ -284,7 +284,8 @@ export default function WeeklyTest({ user, weekDate, test1Questions, test2Questi
       <TestStage
         questions={test1Questions || []}
         stageLabel={`Test 1${weekDate ? ` — ${weekLabel(weekDate)}` : ''}`}
-        stageTitle="核心単語の穴埋め"
+        stageTitle="キーワード穴埋め"
+        nextLabel={test2Questions?.length ? 'Test 2へ' : '結果を見る'}
         onComplete={(results) => {
           setTest1Results(results);
           if (test2Questions?.length) {
@@ -303,7 +304,8 @@ export default function WeeklyTest({ user, weekDate, test1Questions, test2Questi
       <TestStage
         questions={test2Questions || []}
         stageLabel="Test 2"
-        stageTitle="チャンクの穴埋め"
+        stageTitle="チャンク穴埋め"
+        nextLabel="結果を見る"
         onComplete={(results) => {
           setTest2Results(results);
           setStage('final');
