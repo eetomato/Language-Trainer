@@ -34,8 +34,8 @@ function LessonHub({ onSelectSheets, onSelectTest, onSelectAudio, isManager }) {
       <div className="lesson-hero">
         <div>
           <p className="eyebrow">Lesson / レッスン</p>
-          <h2>今日は何を練習しますか？</h2>
-          <p>What would you like to practice today?</p>
+          <h2>What would you like to practice today?</h2>
+          <p>今日は何を練習しますか？</p>
         </div>
       </div>
 
@@ -44,7 +44,7 @@ function LessonHub({ onSelectSheets, onSelectTest, onSelectAudio, isManager }) {
           <span className="hub-icon">💬</span>
           <h3>Customer English</h3>
           <p>お客様との英会話</p>
-          <span className="hub-sub">接客で使える英語表現を練習する<br/>Practice English with customers</span>
+          <span className="hub-sub">Practice English with customers<br/>接客で使える英語表現を練習する</span>
         </button>
 
         {/* Audio Lesson 카드 — 일시 숨김 */}
@@ -65,7 +65,7 @@ function LessonHub({ onSelectSheets, onSelectTest, onSelectAudio, isManager }) {
           <h3>Weekly Test</h3>
           <p>週次テスト</p>
           {testUnlocked
-            ? <span className="hub-sub">今週の表現をテストする<br/>Test this week's expressions</span>
+            ? <span className="hub-sub">Test this week's expressions<br/>今週の表現をテストする</span>
             : <span className="hub-sub hub-locked-msg">
                 次のテスト: {nextSundayLabel()} 日<br/>
                 （日曜日に開放）
