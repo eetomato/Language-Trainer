@@ -1,4 +1,4 @@
-import AddLesson from '../Admin/AddLesson';
+// import AddLesson from '../Admin/AddLesson';
 import ManageEmployees from '../Admin/ManageEmployees';
 import ViewReports from '../Admin/ViewReports';
 import StaffManagement from '../Admin/StaffManagement';
@@ -18,7 +18,8 @@ export default function ManagerDashboard({ stats, lessons = [], onRefreshLessons
 
       <ViewReports stats={stats} />
       <ManageEmployees employees={stats.rankings} />
-      <AddLesson lessons={lessons} onRefresh={onRefreshLessons} />
+      {/* AddLesson 일시 숨김 */}
+      {/* <AddLesson lessons={lessons} onRefresh={onRefreshLessons} /> */}
 
       {supabase ? (
         <>
