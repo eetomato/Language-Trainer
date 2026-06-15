@@ -166,6 +166,7 @@ function FinalResult({ test1Results, test2Results, weekDate, user, onBack, onCom
     stored.push({
       week: weekDate,
       score: pct,
+      employeeName: user?.name || '',
       wrong: allResults
         .filter((r) => !r.isCorrect)
         .map((r) => ({ question: r.sentence || r.question, answer: r.answer })),

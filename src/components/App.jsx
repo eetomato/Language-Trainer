@@ -24,7 +24,7 @@ export default function App() {
   useEffect(() => {
     if (!user) return;
     const results = JSON.parse(localStorage.getItem('nh_test_results') || '[]');
-    const unseen = results.find((r) => !r.shown);
+    const unseen = results.find((r) => !r.shown && r.employeeName === user.name);
     if (unseen) setTestResult(unseen);
   }, [user]);
 
