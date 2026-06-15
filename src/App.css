@@ -1909,3 +1909,34 @@ button {
   color: var(--muted);
   margin-top: 4px;
 }
+
+/* ── Weekly Test / Hub lock ──────────────────────── */
+.hub-card-locked {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.hub-locked-msg {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.blank-sentence-inline {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 2;
+}
+
+.inline-blank {
+  display: inline-block;
+  margin: 0 4px;
+  vertical-align: middle;
+}
+
+.result-correct {
+  border-left: 3px solid var(--success) !important;
+}
+
+.result-wrong {
+  border-left: 3px solid var(--warning) !important;
+}

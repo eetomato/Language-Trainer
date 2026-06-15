@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Check } from 'lucide-react';
+import { supabase } from '../../utils/supabaseClient';
 
 function normalize(s) {
   return String(s || '').trim().toLowerCase().replace(/[.,!?。、'']/g, '');
@@ -11,15 +12,245 @@ function weekLabel(dateStr) {
   return `${d.getMonth() + 1}/${d.getDate()}〜`;
 }
 
-export default function WeeklyTest({ user, weekDate, testQuestions, onComplete, onBack }) {
+// 빈칸 문장: "I ___ the shirt" → 인라인 입력창
+function BlankSentence({ sentence, value, onChange, disabled }) {
+  const parts = (sentence || '').split('___');
+  if (parts.length < 2) {
+    return (
+      <input
+        type="text"
+        className="blank-input"
+        style={{ width: '100%', boxSizing: 'border-box' }}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="英語で入力..."
+        disabled={disabled}
+      />
+    );
+  }
+  return (
+    <span className="blank-sentence-inline">
+      {parts.map((part, i) => (
+        <span key={i}>
+          {part}
+          {i < parts.length - 1 && (
+            <input
+              type="text"
+              className="blank-input inline-blank"
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              placeholder="___"
+              disabled={disabled}
+              style={{ width: Math.max(80, (value?.length || 4) * 11) }}
+            />
+          )}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+// ── 단계별 테스트 (Test 1 / Test 2 공용) ─────────────────────
+function TestStage({ questions, stageLabel, stageTitle, onComplete }) {
   const [answers, setAnswers] = useState({});
   const [results, setResults] = useState(null);
 
-  const part1 = (testQuestions || []).filter((q) => q.type === 'translation');
-  const part2 = (testQuestions || []).filter((q) => q.type === 'situation');
+  const allFilled = questions.every((_, i) => (answers[i] || '').trim());
 
-  // ── 로딩 중 ───────────────────────────────────────────────
-  if (testQuestions === null) {
+  const handleSubmit = () => {
+    const res = questions.map((q, i) => {
+      const isCorrect = normalize(answers[i]) === normalize(q.answer);
+      return { ...q, userAnswer: answers[i] || '', isCorrect };
+    });
+    setResults(res);
+  };
+
+  // 결과 화면
+  if (results) {
+    const correct = results.filter((r) => r.isCorrect).length;
+    return (
+      <div className="lesson-page">
+        <section className="lesson-hero">
+          <div>
+            <p className="eyebrow">{stageLabel} — 結果</p>
+            <h2>{correct} / {results.length} 正解</h2>
+          </div>
+        </section>
+        <section className="lesson-section">
+          <div className="sentence-cards">
+            {results.map((r, i) => (
+              <div key={i} className={`sentence-card ${r.isCorrect ? 'result-correct' : 'result-wrong'}`}>
+                <p style={{ fontSize: '0.75rem', color: 'var(--muted)', marginBottom: 4 }}>Q{i + 1}</p>
+                {r.hint && (
+                  <p style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: 6 }}>{r.hint}</p>
+                )}
+                <p style={{ fontWeight: 600, marginBottom: 8 }}>{r.sentence || r.question}</p>
+                {r.isCorrect
+                  ? <p style={{ color: 'var(--success)', fontSize: '0.9rem' }}>✓ {r.userAnswer}</p>
+                  : <>
+                      <p style={{ color: 'var(--warning)', fontSize: '0.9rem' }}>✗ {r.userAnswer || '(blank)'}</p>
+                      <p style={{ color: 'var(--success)', fontSize: '0.85rem', marginTop: 2 }}>→ {r.answer}</p>
+                    </>
+                }
+              </div>
+            ))}
+          </div>
+          <button
+            type="button"
+            className="primary-action complete-btn"
+            style={{ marginTop: 24 }}
+            onClick={() => onComplete(results)}
+          >
+            次へ <Check size={16} />
+          </button>
+        </section>
+      </div>
+    );
+  }
+
+  // 문제 화면
+  return (
+    <div className="lesson-page">
+      <section className="lesson-hero">
+        <div>
+          <p className="eyebrow">{stageLabel}</p>
+          <h2>{stageTitle}</h2>
+        </div>
+        <div className="review-badge test-badge"><span>TEST</span></div>
+      </section>
+      <section className="lesson-section">
+        <div className="sentence-cards">
+          {questions.map((q, i) => (
+            <div key={i} className="sentence-card">
+              <p style={{ fontSize: '0.75rem', color: 'var(--muted)', marginBottom: 4 }}>Q{i + 1}</p>
+              {q.hint && (
+                <p style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: 8 }}>{q.hint}</p>
+              )}
+              <div style={{ marginBottom: 4 }}>
+                <BlankSentence
+                  sentence={q.sentence || q.question || ''}
+                  value={answers[i] || ''}
+                  onChange={(v) => setAnswers((p) => ({ ...p, [i]: v }))}
+                  disabled={false}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+        <button
+          type="button"
+          className="primary-action complete-btn"
+          style={{ marginTop: 24 }}
+          onClick={handleSubmit}
+          disabled={!allFilled}
+        >
+          <Check size={18} /> 採点する
+        </button>
+      </section>
+    </div>
+  );
+}
+
+// ── 최종 결과 ─────────────────────────────────────────────────
+function FinalResult({ test1Results, test2Results, weekDate, user, onBack, onComplete }) {
+  const allResults = [...test1Results, ...(test2Results || [])];
+  const correct = allResults.filter((r) => r.isCorrect).length;
+  const total = allResults.length;
+  const pct = total ? Math.round((correct / total) * 100) : 0;
+  const t1c = test1Results.filter((r) => r.isCorrect).length;
+  const t2c = (test2Results || []).filter((r) => r.isCorrect).length;
+
+  const handleComplete = async () => {
+    // localStorage 저장
+    const stored = JSON.parse(localStorage.getItem('nh_test_results') || '[]');
+    stored.push({
+      week: weekDate,
+      score: pct,
+      wrong: allResults
+        .filter((r) => !r.isCorrect)
+        .map((r) => ({ question: r.sentence || r.question, answer: r.answer })),
+      date: new Date().toISOString(),
+      shown: false,
+    });
+    localStorage.setItem('nh_test_results', JSON.stringify(stored));
+
+    // Supabase 저장
+    if (supabase && user) {
+      try {
+        const { data: emp } = await supabase
+          .from('employees')
+          .select('id')
+          .eq('name', user.name)
+          .single();
+
+        if (emp?.id) {
+          await supabase.from('results').insert({
+            employee_id: emp.id,
+            question_type: 'weekly_test',
+            user_answer: `test1:${t1c}/${test1Results.length}, test2:${t2c}/${(test2Results || []).length}`,
+            expected_answer: weekDate || '',
+            is_correct: pct >= 80,
+            attempted_date: new Date().toISOString().slice(0, 10),
+          });
+        }
+      } catch (e) {
+        console.warn('[WeeklyTest] Supabase 저장 실패', e.message);
+      }
+    }
+
+    onComplete?.();
+  };
+
+  return (
+    <div className="lesson-page">
+      <section className="lesson-hero">
+        <div>
+          <button type="button" className="back-btn" onClick={onBack}>← Back / 戻る</button>
+          <p className="eyebrow">Weekly Test — Complete</p>
+          <h2>テスト完了！</h2>
+        </div>
+      </section>
+      <section className="lesson-section complete-section">
+        <div className="complete-score">
+          <strong>{pct}%</strong>
+          <p>{correct} / {total} 正解</p>
+        </div>
+        <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginTop: 16 }}>
+          <div style={{ textAlign: 'center', padding: '12px 20px', background: 'var(--paper)', borderRadius: 12 }}>
+            <p style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>Test 1</p>
+            <p style={{ fontWeight: 700 }}>{t1c} / {test1Results.length}</p>
+          </div>
+          {test2Results?.length > 0 && (
+            <div style={{ textAlign: 'center', padding: '12px 20px', background: 'var(--paper)', borderRadius: 12 }}>
+              <p style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>Test 2</p>
+              <p style={{ fontWeight: 700 }}>{t2c} / {test2Results.length}</p>
+            </div>
+          )}
+        </div>
+        <p style={{ textAlign: 'center', marginTop: 24, color: 'var(--muted)', fontSize: '0.9rem' }}>
+          {pct >= 80 ? '🎉 よくできました！Great work!' : '📚 復習して次回また挑戦！'}
+        </p>
+        <button
+          type="button"
+          className="primary-action complete-btn"
+          style={{ marginTop: 24 }}
+          onClick={handleComplete}
+        >
+          <Check size={18} /> 完了
+        </button>
+      </section>
+    </div>
+  );
+}
+
+// ── Main ──────────────────────────────────────────────────────
+export default function WeeklyTest({ user, weekDate, test1Questions, test2Questions, onComplete, onBack }) {
+  const [stage, setStage] = useState('test1'); // 'test1' | 'test2' | 'final'
+  const [test1Results, setTest1Results] = useState(null);
+  const [test2Results, setTest2Results] = useState(null);
+
+  // 로딩 중
+  if (test1Questions === null) {
     return (
       <div style={{ display: 'grid', placeItems: 'center', padding: 64 }}>
         <div className="loading-spinner"
@@ -28,8 +259,8 @@ export default function WeeklyTest({ user, weekDate, testQuestions, onComplete, 
     );
   }
 
-  // ── 문제 없음 ──────────────────────────────────────────────
-  if (testQuestions.length === 0) {
+  // 문제 없음
+  if (!test1Questions?.length && !test2Questions?.length) {
     return (
       <div className="lesson-page">
         <section className="lesson-hero">
@@ -48,141 +279,47 @@ export default function WeeklyTest({ user, weekDate, testQuestions, onComplete, 
     );
   }
 
-  // ── 채점 ───────────────────────────────────────────────────
-  const handleSubmit = () => {
-    const allQ = [...part1, ...part2];
-    const res = allQ.map((q, i) => {
-      const isCorrect = normalize(answers[i]) === normalize(q.answer);
-      return { ...q, userAnswer: answers[i] || '', isCorrect };
-    });
-    setResults(res);
-
-    const wrong = res.filter((r) => !r.isCorrect);
-    const score = Math.round(((res.length - wrong.length) / res.length) * 100);
-
-    const stored = JSON.parse(localStorage.getItem('nh_test_results') || '[]');
-    stored.push({
-      week: weekDate,
-      score,
-      wrong: wrong.map((r) => ({ question: r.question, answer: r.answer })),
-      date: new Date().toISOString(),
-      shown: false,
-    });
-    localStorage.setItem('nh_test_results', JSON.stringify(stored));
-    onComplete?.();
-  };
-
-  // ── 결과 화면 ──────────────────────────────────────────────
-  if (results) {
-    const correctCount = results.filter((r) => r.isCorrect).length;
-    const pct = Math.round((correctCount / results.length) * 100);
+  if (stage === 'test1') {
     return (
-      <div className="lesson-page">
-        <section className="lesson-hero">
-          <div>
-            <button type="button" className="back-btn" onClick={onBack}>← Back / 戻る</button>
-            <p className="eyebrow">Weekly Test — Complete</p>
-            <h2>週間テスト結果</h2>
-          </div>
-        </section>
-        <section className="lesson-section complete-section">
-          <div className="complete-score">
-            <strong>{pct}%</strong>
-            <p>{correctCount} / {results.length} correct</p>
-          </div>
-
-          {results.some((r) => !r.isCorrect) && (
-            <div className="test-wrong-list">
-              <p className="eyebrow" style={{ marginTop: 24 }}>要復習</p>
-              {results.filter((r) => !r.isCorrect).map((r, i) => (
-                <div key={i} className="test-wrong-item">
-                  <p className="test-sentence" style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>
-                    {r.question}
-                  </p>
-                  <p className="test-answer-row">
-                    <span className="wrong-label">Your answer:</span> {r.userAnswer || '(blank)'}
-                  </p>
-                  <p className="test-answer-row correct-answer">
-                    <span className="correct-label">Correct:</span> {r.answer}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-      </div>
+      <TestStage
+        questions={test1Questions || []}
+        stageLabel={`Test 1${weekDate ? ` — ${weekLabel(weekDate)}` : ''}`}
+        stageTitle="核心単語の穴埋め"
+        onComplete={(results) => {
+          setTest1Results(results);
+          if (test2Questions?.length) {
+            setStage('test2');
+          } else {
+            setTest2Results([]);
+            setStage('final');
+          }
+        }}
+      />
     );
   }
 
-  // ── 테스트 화면 ────────────────────────────────────────────
-  const allFilled = [...part1, ...part2].every((_, i) => (answers[i] || '').trim());
-
-  const QuestionCard = ({ q, idx, label }) => (
-    <div className="sentence-card">
-      <p style={{ fontSize: '0.75rem', color: 'var(--muted)', marginBottom: 6 }}>{label}</p>
-      <p style={{ fontWeight: 600, marginBottom: 10 }}>{q.question}</p>
-      <input
-        type="text"
-        className="blank-input"
-        style={{ width: '100%', boxSizing: 'border-box' }}
-        value={answers[idx] || ''}
-        onChange={(e) => setAnswers((p) => ({ ...p, [idx]: e.target.value }))}
-        placeholder="英語で入力してください..."
+  if (stage === 'test2') {
+    return (
+      <TestStage
+        questions={test2Questions || []}
+        stageLabel="Test 2"
+        stageTitle="チャンクの穴埋め"
+        onComplete={(results) => {
+          setTest2Results(results);
+          setStage('final');
+        }}
       />
-    </div>
-  );
+    );
+  }
 
   return (
-    <div className="lesson-page">
-      <section className="lesson-hero">
-        <div>
-          <button type="button" className="back-btn" onClick={onBack}>← Back / 戻る</button>
-          <p className="eyebrow">Weekly Test {weekDate ? `— ${weekLabel(weekDate)}` : ''}</p>
-          <h2>週間テスト</h2>
-          <p>{user.name} — 英語で答えてください。</p>
-        </div>
-        <div className="review-badge test-badge"><span>TEST</span></div>
-      </section>
-
-      <section className="lesson-section">
-        {part1.length > 0 && (
-          <>
-            <div className="section-heading">
-              <p className="eyebrow">Part 1 — Translation</p>
-              <h2>日本語 → 英語</h2>
-            </div>
-            <div className="sentence-cards">
-              {part1.map((q, i) => (
-                <QuestionCard key={i} q={q} idx={i} label={`Q${i + 1}`} />
-              ))}
-            </div>
-          </>
-        )}
-
-        {part2.length > 0 && (
-          <>
-            <div className="section-heading" style={{ marginTop: 24 }}>
-              <p className="eyebrow">Part 2 — Situation</p>
-              <h2>状況 → 英語</h2>
-            </div>
-            <div className="sentence-cards">
-              {part2.map((q, i) => (
-                <QuestionCard key={i} q={q} idx={part1.length + i} label={`Q${part1.length + i + 1}`} />
-              ))}
-            </div>
-          </>
-        )}
-
-        <button
-          type="button"
-          className="primary-action complete-btn"
-          style={{ marginTop: 24 }}
-          onClick={handleSubmit}
-          disabled={!allFilled}
-        >
-          <Check size={18} /> Submit Test
-        </button>
-      </section>
-    </div>
+    <FinalResult
+      test1Results={test1Results || []}
+      test2Results={test2Results || []}
+      weekDate={weekDate}
+      user={user}
+      onBack={onBack}
+      onComplete={onComplete}
+    />
   );
 }

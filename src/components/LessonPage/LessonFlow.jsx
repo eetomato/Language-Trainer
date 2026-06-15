@@ -12,8 +12,23 @@ function toDateStr(isoStr) {
   return isoStr ? isoStr.slice(0, 10) : null;
 }
 
+// 다음 일요일까지 남은 일수 계산
+function daysUntilSunday() {
+  const day = new Date().getDay(); // 0=일, 1=월 ... 6=토
+  return day === 0 ? 0 : 7 - day;
+}
+
+function nextSundayLabel() {
+  const d = new Date();
+  d.setDate(d.getDate() + daysUntilSunday());
+  return `${d.getMonth() + 1}/${d.getDate()}`;
+}
+
 // ── 허브 화면 ─────────────────────────────────────────────────
 function LessonHub({ onSelectSheets, onSelectTest, onSelectAudio }) {
+  const isSunday = new Date().getDay() === 0;
+  const daysLeft = daysUntilSunday();
+
   return (
     <div className="lesson-page">
       <div className="lesson-hero">
@@ -24,7 +39,7 @@ function LessonHub({ onSelectSheets, onSelectTest, onSelectAudio }) {
         </div>
       </div>
 
-      <div className="lesson-hub-grid" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
+      <div className="lesson-hub-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
         <button type="button" className="lesson-hub-card" onClick={onSelectSheets}>
           <span className="hub-icon">💬</span>
           <h3>Customer English</h3>
@@ -40,11 +55,22 @@ function LessonHub({ onSelectSheets, onSelectTest, onSelectAudio }) {
           <span className="hub-sub">音声で英語を学ぶ<br/>Learn English by listening</span>
         </button> */}
 
-        <button type="button" className="lesson-hub-card" onClick={onSelectTest}>
+        <button
+          type="button"
+          className={`lesson-hub-card ${!isSunday ? 'hub-card-locked' : ''}`}
+          onClick={isSunday ? onSelectTest : undefined}
+          disabled={!isSunday}
+        >
           <span className="hub-icon">📝</span>
           <h3>Weekly Test</h3>
           <p>週次テスト</p>
-          <span className="hub-sub">今週の表現をテストする<br/>Test this week's expressions</span>
+          {isSunday
+            ? <span className="hub-sub">今週の表現をテストする<br/>Test this week's expressions</span>
+            : <span className="hub-sub hub-locked-msg">
+                次のテスト: {nextSundayLabel()} 日<br/>
+                （日曜日に開放）
+              </span>
+          }
         </button>
       </div>
     </div>
@@ -56,10 +82,11 @@ export default function LessonFlow({
   submitAnswer, saveSession, employeeStats,
 }) {
   const { completed, markLessonComplete, markTestComplete } = useProgress(user);
-  const [mode, setMode] = useState('hub'); // 'hub' | 'sheets' | 'audio' | 'test' | 'video'
+  const [mode, setMode] = useState('hub');
   const [selectedLesson, setSelectedLesson] = useState(null);
   const [reviewDone, setReviewDone] = useState(false);
-  const [testQuestions, setTestQuestions] = useState(null); // null = 로딩 전
+  const [test1Questions, setTest1Questions] = useState(null);
+  const [test2Questions, setTest2Questions] = useState(null);
   const [testWeek, setTestWeek] = useState(null);
 
   const sorted = useMemo(() =>
@@ -85,21 +112,24 @@ export default function LessonFlow({
         onSelectSheets={() => setMode('sheets')}
         onSelectAudio={() => setMode('audio')}
         onSelectTest={async () => {
-          setTestQuestions(null);
+          setTest1Questions(null);
+          setTest2Questions(null);
           setMode('test');
-          if (!supabase) { setTestQuestions([]); return; }
+          if (!supabase) { setTest1Questions([]); setTest2Questions([]); return; }
           const { data, error } = await supabase
             .from('weekly_sheets')
-            .select('week_start_date, test_questions')
+            .select('week_start_date, test1_questions, test2_questions')
             .eq('is_hidden', false)
             .order('week_start_date', { ascending: false })
             .limit(1)
             .single();
           if (!error && data) {
-            setTestQuestions(data.test_questions || []);
+            setTest1Questions(data.test1_questions || []);
+            setTest2Questions(data.test2_questions || []);
             setTestWeek(data.week_start_date);
           } else {
-            setTestQuestions([]);
+            setTest1Questions([]);
+            setTest2Questions([]);
           }
         }}
       />
@@ -128,7 +158,8 @@ export default function LessonFlow({
       <WeeklyTest
         user={user}
         weekDate={testWeek}
-        testQuestions={testQuestions}
+        test1Questions={test1Questions}
+        test2Questions={test2Questions}
         onComplete={() => {
           markTestComplete(testWeek);
           setMode('hub');
