@@ -1940,3 +1940,218 @@ button {
 .result-wrong {
   border-left: 3px solid var(--warning) !important;
 }
+
+/* ── WeeklySheets タブ ───────────────────────────── */
+.ws-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 0 20px 4px;
+  border-bottom: 1px solid var(--border, rgba(0,0,0,.08));
+  margin-bottom: 4px;
+}
+
+.ws-tab {
+  background: none;
+  border: none;
+  padding: 10px 16px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.ws-tab:hover {
+  color: var(--ink);
+}
+
+.ws-tab-active {
+  color: var(--ink);
+  border-bottom-color: var(--accent);
+}
+
+/* ── 並び替えエクササイズ ───────────────────────── */
+.ws-sort-wrapper {
+  padding: 0 0 40px;
+}
+
+.sort-sit-list {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sort-sit-heading {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.sort-sit-btn {
+  background: var(--paper, #f5f5f5);
+  border: 1px solid var(--border, rgba(0,0,0,.08));
+  border-radius: 12px;
+  padding: 14px 16px;
+  text-align: left;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.sort-sit-btn:hover {
+  background: var(--card-hover, rgba(0,0,0,.04));
+}
+
+.sort-exercise {
+  padding: 16px 20px 40px;
+}
+
+.sort-progress {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.sort-sit-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.sort-count {
+  font-size: 0.8rem;
+  color: var(--muted);
+  background: var(--paper, #f5f5f5);
+  padding: 2px 10px;
+  border-radius: 20px;
+}
+
+.sort-question {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sort-translation {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.5;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border, rgba(0,0,0,.08));
+}
+
+.sort-placed-area {
+  min-height: 52px;
+  background: var(--paper, #f5f5f5);
+  border: 2px dashed var(--border, rgba(0,0,0,.15));
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.sort-correct {
+  border-color: var(--success, #22c55e) !important;
+  background: rgba(34, 197, 94, 0.06) !important;
+}
+
+.sort-wrong {
+  border-color: var(--warning, #ef4444) !important;
+  background: rgba(239, 68, 68, 0.06) !important;
+  animation: sort-shake 0.35s ease;
+}
+
+@keyframes sort-shake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-6px); }
+  40%       { transform: translateX(6px); }
+  60%       { transform: translateX(-4px); }
+  80%       { transform: translateX(4px); }
+}
+
+.sort-placeholder {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.sort-pool {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sort-chip {
+  background: var(--ink);
+  color: var(--bg, #fff);
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+}
+
+.sort-chip:hover:not(:disabled) {
+  opacity: 0.85;
+  transform: translateY(-1px);
+}
+
+.sort-chip:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.sort-chip-placed {
+  background: var(--accent, #1a1a1a);
+  opacity: 0.9;
+}
+
+.sort-chip-placed:hover {
+  opacity: 0.7 !important;
+}
+
+.sort-feedback {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.sort-feedback-correct {
+  color: var(--success, #22c55e);
+}
+
+.sort-feedback-wrong {
+  color: var(--warning, #ef4444);
+}
+
+.sort-result {
+  padding: 32px 20px;
+  text-align: center;
+}
+
+.sort-result-title {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.sort-result-score {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
