@@ -1,14 +1,82 @@
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit2, RefreshCw, Save, X } from 'lucide-react';
+import { Plus, Trash2, Edit2, RefreshCw, Save, X, Copy, Check } from 'lucide-react';
 import { supabase } from '../../utils/supabaseClient';
+
+// ── 리셋 확인 모달 ────────────────────────────────────────────
+function ResetModal({ emp, onConfirm, onCancel }) {
+  return (
+    <div className="popup-overlay" onClick={onCancel}>
+      <div className="popup-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 340 }}>
+        <p className="eyebrow" style={{ color: 'var(--accent)', marginBottom: 8 }}>パスワードリセット</p>
+        <p style={{ fontWeight: 700, marginBottom: 8 }}>{emp.name}</p>
+        <p style={{ fontSize: '0.9rem', color: 'var(--muted)', marginBottom: 20 }}>
+          このスタッフのパスワードをリセットします。<br />
+          次回ログイン時に新しいパスワードを設定できます。
+        </p>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button type="button" className="secondary-action" style={{ flex: 1 }} onClick={onCancel}>
+            キャンセル
+          </button>
+          <button type="button" className="primary-action" style={{ flex: 1 }} onClick={onConfirm}>
+            リセット
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── 리셋 완료 모달 ────────────────────────────────────────────
+function ResetDoneModal({ empName, onClose }) {
+  const [copied, setCopied] = useState(false);
+  const msg = `次回ログイン時にパスワードを設定してください。`;
+
+  const copy = () => {
+    navigator.clipboard.writeText(msg).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  return (
+    <div className="popup-overlay" onClick={onClose}>
+      <div className="popup-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 340 }}>
+        <p className="eyebrow" style={{ color: 'var(--success)', marginBottom: 8 }}>リセット完了</p>
+        <p style={{ fontWeight: 700, marginBottom: 12 }}>{empName}</p>
+        <div style={{
+          background: 'var(--paper)',
+          borderRadius: 10,
+          padding: '14px 16px',
+          marginBottom: 12,
+        }}>
+          <p style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: 6 }}>スタッフへ伝えてください</p>
+          <p style={{ fontSize: '0.95rem', fontWeight: 600 }}>
+            パスワードがリセットされました。<br />
+            次回ログイン時に新しいパスワードを設定してください。
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button type="button" className="secondary-action" style={{ flex: 1 }} onClick={copy}>
+            {copied ? <><Check size={14} /> コピー済み</> : <><Copy size={14} /> コピー</>}
+          </button>
+          <button type="button" className="primary-action" style={{ flex: 1 }} onClick={onClose}>
+            閉じる
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function StaffManagement() {
   const [employees, setEmployees] = useState([]);
   const [stores, setStores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newStaff, setNewStaff] = useState({ name: '', store_name: '' });
-  const [editing, setEditing] = useState(null); // { id, name, store_name }
-  const [msg, setMsg] = useState(null); // { type: 'ok'|'err', text }
+  const [editing, setEditing] = useState(null);
+  const [msg, setMsg] = useState(null);
+  const [resetTarget, setResetTarget] = useState(null);   // 확인 모달 대상
+  const [resetDone, setResetDone] = useState(null);       // 완료 모달 대상 이름
 
   useEffect(() => { load(); }, []);
 
@@ -34,12 +102,8 @@ export default function StaffManagement() {
     if (!name) return;
 
     const email = `${name.toLowerCase()}@nhmenswear.app`;
-
     const { error } = await supabase.from('employees').insert({
-      name,
-      store_name: storeName,
-      email,
-      role: 'staff',
+      name, store_name: storeName, email, role: 'staff',
     });
 
     if (error) { flash('err', `Error: ${error.message}`); return; }
@@ -67,17 +131,17 @@ export default function StaffManagement() {
     load();
   };
 
-  // ── Password reset ────────────────────────────────────────────────
-  // Clears auth_id + rotates email so staff can re-register on next login.
-  const resetPassword = async (emp) => {
-    if (!window.confirm(`${emp.name} のパスワードをリセットしますか？\n次回ログイン時に新しいパスワードを設定できます。`)) return;
+  // ── Password reset ─────────────────────────────────────────────────
+  const confirmReset = async () => {
+    const emp = resetTarget;
+    setResetTarget(null);
     const newEmail = `${emp.name.toLowerCase()}.r${Date.now()}@nhmenswear.app`;
     const { error } = await supabase
       .from('employees')
       .update({ auth_id: null, email: newEmail })
       .eq('id', emp.id);
     if (error) { flash('err', error.message); return; }
-    flash('ok', `${emp.name} のパスワードをリセットしました。`);
+    setResetDone(emp.name);
     load();
   };
 
@@ -85,6 +149,21 @@ export default function StaffManagement() {
 
   return (
     <section className="dashboard-band">
+      {/* 모달 */}
+      {resetTarget && (
+        <ResetModal
+          emp={resetTarget}
+          onConfirm={confirmReset}
+          onCancel={() => setResetTarget(null)}
+        />
+      )}
+      {resetDone && (
+        <ResetDoneModal
+          empName={resetDone}
+          onClose={() => setResetDone(null)}
+        />
+      )}
+
       <div className="section-heading">
         <p className="eyebrow">Admin — Staff</p>
         <h2>スタッフ管理</h2>
@@ -165,7 +244,7 @@ export default function StaffManagement() {
                   </button>
                   <button
                     className="icon-btn"
-                    onClick={() => resetPassword(emp)}
+                    onClick={() => setResetTarget(emp)}
                     type="button"
                     title="パスワードリセット"
                   >
