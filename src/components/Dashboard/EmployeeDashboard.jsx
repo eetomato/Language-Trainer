@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BookOpen, Clock, CalendarDays, Flame, CheckCircle2, XCircle } from 'lucide-react';
+import { BookOpen, Clock, CalendarDays, Flame, CheckCircle2 } from 'lucide-react';
 import { formatMinutes } from '../../utils/dataFormatter';
 
 function weekLabel(dateStr) {
@@ -9,7 +9,6 @@ function weekLabel(dateStr) {
 }
 
 function TodayStats({ stats }) {
-  const today = new Date().toLocaleDateString('ja-JP');
   return (
     <div className="metric-grid">
       <article className="metric-card">
@@ -19,7 +18,7 @@ function TodayStats({ stats }) {
       </article>
       <article className="metric-card">
         <CalendarDays size={18} className="metric-icon" />
-        <span>Last Study</span>
+        <span>Last Lesson</span>
         <strong>{stats.lastLesson}</strong>
       </article>
       <article className="metric-card">
@@ -37,81 +36,84 @@ function TestResultSection({ userName }) {
 
   useEffect(() => {
     const all = JSON.parse(localStorage.getItem('nh_test_results') || '[]');
-    // 本人の最新テスト結果
     const mine = all
       .filter((r) => r.employeeName === userName)
       .sort((a, b) => new Date(b.date) - new Date(a.date));
     if (mine.length) setResult(mine[0]);
   }, [userName]);
 
-  if (!result) return null;
-
-  const passed = result.score >= 80;
+  const passed = result && result.score >= 80;
 
   return (
     <section className="dashboard-band">
       <div className="section-heading">
-        <p className="eyebrow">Weekly Test — {weekLabel(result.week)}</p>
-        <h2>テスト結果</h2>
+        <p className="eyebrow">Weekly Test{result ? ` — ${weekLabel(result.week)}` : ''}</p>
+        <h2>Test Results</h2>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
-        <div
-          style={{
-            fontSize: '2rem',
-            fontWeight: 800,
-            color: passed ? 'var(--success, #22c55e)' : 'var(--warning, #ef4444)',
-          }}
-        >
-          {result.score}%
-        </div>
-        <div>
-          <p style={{ fontWeight: 600, fontSize: '0.95rem' }}>
-            {passed ? '🎉 よくできました！' : '📚 復習して再挑戦！'}
-          </p>
-          <p style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>
-            {new Date(result.date).toLocaleDateString('ja-JP')} 受験
-          </p>
-        </div>
-      </div>
-
-      {result.wrong?.length > 0 && (
-        <>
-          <button
-            type="button"
-            className="text-action"
-            style={{ marginBottom: 12 }}
-            onClick={() => setExpanded((v) => !v)}
-          >
-            {expanded ? '▲ 閉じる' : `▼ 間違えた問題を見る (${result.wrong.length}問)`}
-          </button>
-          {expanded && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {result.wrong.map((w, i) => (
-                <div
-                  key={i}
-                  style={{
-                    background: 'var(--paper, #f5f5f5)',
-                    borderRadius: 10,
-                    padding: '10px 14px',
-                    borderLeft: '3px solid var(--warning, #ef4444)',
-                  }}
-                >
-                  <p style={{ fontSize: '0.8rem', color: 'var(--muted)', marginBottom: 4 }}>Q{i + 1}</p>
-                  <p style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: 4 }}>{w.question}</p>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--success, #22c55e)' }}>→ {w.answer}</p>
-                </div>
-              ))}
-            </div>
-          )}
-        </>
+      {!result && (
+        <p style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>No test taken yet.</p>
       )}
 
-      {(!result.wrong || result.wrong.length === 0) && (
-        <p style={{ fontSize: '0.9rem', color: 'var(--success, #22c55e)', fontWeight: 600 }}>
-          <CheckCircle2 size={15} style={{ verticalAlign: 'middle', marginRight: 4 }} />
-          全問正解！
-        </p>
+      {result && (
+        <>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
+            <div
+              style={{
+                fontSize: '2rem',
+                fontWeight: 800,
+                color: passed ? 'var(--success, #22c55e)' : 'var(--warning, #ef4444)',
+              }}
+            >
+              {result.score}%
+            </div>
+            <div>
+              <p style={{ fontWeight: 600, fontSize: '0.95rem' }}>
+                {passed ? '🎉 よくできました！' : '📚 復習して再挑戦！'}
+              </p>
+              <p style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>
+                {new Date(result.date).toLocaleDateString('ja-JP')} 受験
+              </p>
+            </div>
+          </div>
+
+          {result.wrong?.length > 0 ? (
+            <>
+              <button
+                type="button"
+                className="text-action"
+                style={{ marginBottom: 12 }}
+                onClick={() => setExpanded((v) => !v)}
+              >
+                {expanded ? '▲ 閉じる' : `▼ 間違えた問題を見る (${result.wrong.length}問)`}
+              </button>
+              {expanded && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {result.wrong.map((w, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        background: 'var(--paper, #f5f5f5)',
+                        borderRadius: 10,
+                        padding: '10px 14px',
+                        borderLeft: '3px solid var(--warning, #ef4444)',
+                      }}
+                    >
+                      <p style={{ fontSize: '0.8rem', color: 'var(--muted)', marginBottom: 4 }}>Q{i + 1}</p>
+                      <p style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: 4 }}>{w.question}</p>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--success, #22c55e)' }}>→ {w.answer}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            <p style={{ fontSize: '0.9rem', color: 'var(--success, #22c55e)', fontWeight: 600 }}>
+              <CheckCircle2 size={15} style={{ verticalAlign: 'middle', marginRight: 4 }} />
+              全問正解！
+            </p>
+          )}
+        </>
       )}
     </section>
   );

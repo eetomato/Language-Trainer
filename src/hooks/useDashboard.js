@@ -51,6 +51,8 @@ function mergeEmployees(supabaseEmps, localEmps) {
 
 // Supabase rows → calculateEmployeeStats 形式
 function buildStatsFromSupabase(user, sbResults, sbSessions) {
+  const today = new Date().toISOString().slice(0, 10);
+
   const results = sbResults.map((r) => ({
     employeeName: user.name,
     isCorrect: r.is_correct,
@@ -64,7 +66,14 @@ function buildStatsFromSupabase(user, sbResults, sbSessions) {
     date: s.date || s.created_at,
   }));
 
-  return calculateEmployeeStats(user, results, sessions);
+  const base = calculateEmployeeStats(user, results, sessions);
+
+  // studyMinutes: 今日分のみ集計
+  const todayMinutes = sessions
+    .filter((s) => (s.date || '').slice(0, 10) === today)
+    .reduce((sum, s) => sum + (s.studyMinutes || 0), 0);
+
+  return { ...base, studyMinutes: todayMinutes };
 }
 
 export function useDashboard(user) {
