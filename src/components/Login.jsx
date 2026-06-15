@@ -81,8 +81,31 @@ export default function Login() {
     setSubmitting(true);
     const result = await setupPassword({ employee: pendingEmployee, password });
     setSubmitting(false);
-    if (result.error) setError(result.error);
+    if (result.error) { setError(result.error); return; }
+
+    setError('');
+    setPassword('');
+    setConfirmPassword('');
+    setStep('setup-done');
+    setTimeout(() => {
+      setStep('login');
+    }, 2000);
   };
+
+  if (step === 'setup-done') {
+    return (
+      <main className="login-shell">
+        <section className="login-panel">
+          <p className="eyebrow">n.h ginza</p>
+          <div style={{ textAlign: 'center', padding: '32px 0' }}>
+            <p style={{ fontSize: '2rem', marginBottom: 12 }}>✓</p>
+            <p style={{ fontWeight: 700, marginBottom: 8 }}>パスワードを設定しました。</p>
+            <p style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>ログイン画面に戻ります...</p>
+          </div>
+        </section>
+      </main>
+    );
+  }
 
   if (step === 'setup') {
     return (
@@ -99,7 +122,7 @@ export default function Login() {
             {error && <p className="feedback wrong">{error}</p>}
             <button className="primary-action" type="submit" disabled={submitting || !password || !confirmPassword}>
               <Lock size={18} />
-              {submitting ? '設定中...' : 'パスワードを設定してログイン'}
+              {submitting ? '設定中...' : 'パスワードを設定する'}
             </button>
           </form>
           <button className="text-action" type="button" onClick={() => { setStep('login'); setError(''); }}>← 戻る</button>
