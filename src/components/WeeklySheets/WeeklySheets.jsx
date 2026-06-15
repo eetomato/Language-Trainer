@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Volume2 } from 'lucide-react';
+import { Volume2, BookOpen, Shuffle } from 'lucide-react';
 import { supabase } from '../../utils/supabaseClient';
 
 function speak(text) {
@@ -119,7 +119,7 @@ function SituationCard({ situation }) {
   );
 }
 
-// ── 並び替えタブ ───────────────────────────────────────────────
+// ── 並べ替えタブ ───────────────────────────────────────────────
 
 function shuffle(arr) {
   const a = [...arr];
@@ -337,14 +337,14 @@ function WeekDetail({ sheets, weekDate, onBack }) {
           className={`ws-tab${tab === 'learn' ? ' ws-tab-active' : ''}`}
           onClick={() => setTab('learn')}
         >
-          📖 学習
+          <BookOpen size={15} /> 学習
         </button>
         <button
           type="button"
           className={`ws-tab${tab === 'sort' ? ' ws-tab-active' : ''}`}
           onClick={() => setTab('sort')}
         >
-          🔤 並び替え
+          <Shuffle size={15} /> 並べ替え
         </button>
       </div>
 
