@@ -337,14 +337,14 @@ function WeekDetail({ sheets, weekDate, onBack }) {
           className={`ws-tab${tab === 'learn' ? ' ws-tab-active' : ''}`}
           onClick={() => setTab('learn')}
         >
-          <BookOpen size={15} /> 学習
+          <BookOpen size={15} /> Study
         </button>
         <button
           type="button"
           className={`ws-tab${tab === 'sort' ? ' ws-tab-active' : ''}`}
           onClick={() => setTab('sort')}
         >
-          <Shuffle size={15} /> 並べ替え
+          <Shuffle size={15} /> Reorder
         </button>
       </div>
 
