@@ -5,7 +5,6 @@ export default function Layout({ user, onLogout, children }) {
     <div className="app-shell">
       <header className="top-bar">
         <div>
-          <p className="eyebrow">n.h ginza</p>
           <h1>Menswear Language Trainer</h1>
         </div>
         <div className="user-chip">

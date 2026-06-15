@@ -96,7 +96,6 @@ export default function Login() {
     return (
       <main className="login-shell">
         <section className="login-panel">
-          <p className="eyebrow">n.h ginza</p>
           <div style={{ textAlign: 'center', padding: '32px 0' }}>
             <p style={{ fontSize: '2rem', marginBottom: 12 }}>✓</p>
             <p style={{ fontWeight: 700, marginBottom: 8 }}>パスワードを設定しました。</p>
@@ -111,7 +110,6 @@ export default function Login() {
     return (
       <main className="login-shell">
         <section className="login-panel">
-          <p className="eyebrow">n.h ginza</p>
           <h1>パスワード設定</h1>
           <p className="login-copy">{pendingEmployee?.name} さん、初回ログインです。パスワードを設定してください。</p>
           <form onSubmit={handleSetup} className="login-form">
@@ -134,7 +132,6 @@ export default function Login() {
   return (
     <main className="login-shell">
       <section className="login-panel" aria-labelledby="login-title">
-        <p className="eyebrow">n.h ginza</p>
         <h1 id="login-title">Language Trainer</h1>
         <p className="login-copy">Retail English practice for menswear service.</p>
 
