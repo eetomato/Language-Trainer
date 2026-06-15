@@ -25,9 +25,9 @@ function nextSundayLabel() {
 }
 
 // ── 허브 화면 ─────────────────────────────────────────────────
-function LessonHub({ onSelectSheets, onSelectTest, onSelectAudio }) {
+function LessonHub({ onSelectSheets, onSelectTest, onSelectAudio, isManager }) {
   const isSunday = new Date().getDay() === 0;
-  const daysLeft = daysUntilSunday();
+  const testUnlocked = isManager || isSunday;
 
   return (
     <div className="lesson-page">
@@ -57,14 +57,14 @@ function LessonHub({ onSelectSheets, onSelectTest, onSelectAudio }) {
 
         <button
           type="button"
-          className={`lesson-hub-card ${!isSunday ? 'hub-card-locked' : ''}`}
-          onClick={isSunday ? onSelectTest : undefined}
-          disabled={!isSunday}
+          className={`lesson-hub-card ${!testUnlocked ? 'hub-card-locked' : ''}`}
+          onClick={testUnlocked ? onSelectTest : undefined}
+          disabled={!testUnlocked}
         >
           <span className="hub-icon">📝</span>
           <h3>Weekly Test</h3>
           <p>週次テスト</p>
-          {isSunday
+          {testUnlocked
             ? <span className="hub-sub">今週の表現をテストする<br/>Test this week's expressions</span>
             : <span className="hub-sub hub-locked-msg">
                 次のテスト: {nextSundayLabel()} 日<br/>
@@ -111,6 +111,7 @@ export default function LessonFlow({
       <LessonHub
         onSelectSheets={() => setMode('sheets')}
         onSelectAudio={() => setMode('audio')}
+        isManager={user?.role === 'manager'}
         onSelectTest={async () => {
           setTest1Questions(null);
           setTest2Questions(null);
