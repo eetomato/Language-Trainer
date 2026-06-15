@@ -32,12 +32,13 @@ function LessonHub({ onSelectSheets, onSelectTest, onSelectAudio }) {
           <span className="hub-sub">接客で使える英語表現を練習する<br/>Practice English with customers</span>
         </button>
 
-        <button type="button" className="lesson-hub-card" onClick={onSelectAudio}>
+        {/* Audio Lesson 카드 — 일시 숨김 */}
+        {/* <button type="button" className="lesson-hub-card" onClick={onSelectAudio}>
           <span className="hub-icon">🎧</span>
           <h3>Audio Lesson</h3>
           <p>オーディオレッスン</p>
           <span className="hub-sub">音声で英語を学ぶ<br/>Learn English by listening</span>
-        </button>
+        </button> */}
 
         <button type="button" className="lesson-hub-card" onClick={onSelectTest}>
           <span className="hub-icon">📝</span>
