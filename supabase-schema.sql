@@ -164,3 +164,34 @@ insert into lessons (
   'beginner'
 )
 on conflict do nothing;
+
+-- ================================================================
+-- SESSIONS (add if not exists — run this migration in Supabase)
+-- ================================================================
+create table if not exists sessions (
+  id uuid primary key default gen_random_uuid(),
+  employee_id uuid references employees(id) on delete set null,
+  lesson_id uuid references lessons(id) on delete set null,
+  study_minutes integer not null default 0,
+  date date not null default current_date,
+  created_at timestamptz not null default now()
+);
+
+alter table sessions enable row level security;
+create policy "sessions_read_all" on sessions for select using (true);
+create policy "sessions_insert_all" on sessions for insert with check (true);
+
+-- WEEKLY_SHEETS (add if not exists)
+create table if not exists weekly_sheets (
+  id uuid primary key default gen_random_uuid(),
+  week_start_date date not null,
+  is_hidden boolean not null default false,
+  situations jsonb not null default '[]'::jsonb,
+  test1_questions jsonb not null default '[]'::jsonb,
+  test2_questions jsonb not null default '[]'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+alter table weekly_sheets enable row level security;
+create policy "weekly_sheets_read_all" on weekly_sheets for select using (true);
+create policy "weekly_sheets_write_manager" on weekly_sheets for all using (true) with check (true);

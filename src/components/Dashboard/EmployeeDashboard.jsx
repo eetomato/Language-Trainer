@@ -69,10 +69,10 @@ function TestResultSection({ userName }) {
             </div>
             <div>
               <p style={{ fontWeight: 600, fontSize: '0.95rem' }}>
-                {passed ? '🎉 よくできました！' : '📚 復習して再挑戦！'}
+                {passed ? '🎉 Well done!' : '📚 Keep practicing!'}
               </p>
               <p style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>
-                {new Date(result.date).toLocaleDateString('ja-JP')} 受験
+                {new Date(result.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
               </p>
             </div>
           </div>
@@ -85,7 +85,7 @@ function TestResultSection({ userName }) {
                 style={{ marginBottom: 12 }}
                 onClick={() => setExpanded((v) => !v)}
               >
-                {expanded ? '▲ 閉じる' : `▼ 間違えた問題を見る (${result.wrong.length}問)`}
+                {expanded ? '▲ Hide' : `▼ Show wrong answers (${result.wrong.length})`}
               </button>
               {expanded && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -110,7 +110,7 @@ function TestResultSection({ userName }) {
           ) : (
             <p style={{ fontSize: '0.9rem', color: 'var(--success, #22c55e)', fontWeight: 600 }}>
               <CheckCircle2 size={15} style={{ verticalAlign: 'middle', marginRight: 4 }} />
-              全問正解！
+              Perfect score!
             </p>
           )}
         </>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Volume2, BookOpen, LayoutList, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../../utils/supabaseClient';
 
@@ -107,12 +107,11 @@ function getChunks(sentence) {
   return (sentence.text || '').trim().split(/\s+/).filter(Boolean);
 }
 
-// Single sentence arrange row inside a card
 function ArrangeSentenceRow({ sentence, onSolved }) {
   const chunks = getChunks(sentence);
   const [pool, setPool] = useState(() => shuffle(chunks.map((c, i) => ({ text: c, id: i }))));
   const [placed, setPlaced] = useState([]);
-  const [status, setStatus] = useState(null); // null | 'correct' | 'wrong'
+  const [status, setStatus] = useState(null);
 
   const pickChunk = (item) => {
     if (status === 'correct') return;
@@ -135,7 +134,6 @@ function ArrangeSentenceRow({ sentence, onSolved }) {
         onSolved();
       } else {
         setStatus('wrong');
-        // shake then auto-reset after 900ms
         setTimeout(() => {
           setPool(shuffle(chunks.map((c, i) => ({ text: c, id: i }))));
           setPlaced([]);
@@ -147,10 +145,8 @@ function ArrangeSentenceRow({ sentence, onSolved }) {
 
   return (
     <div className={`arr-sentence${status === 'correct' ? ' arr-sentence-done' : ''}`}>
-      {/* translation hint */}
       <p className="arr-hint">{sentence.translation || '—'}</p>
 
-      {/* answer drop zone */}
       <div className={`arr-zone${status === 'wrong' ? ' arr-zone-wrong' : ''}${status === 'correct' ? ' arr-zone-correct' : ''}`}>
         {status === 'correct' ? (
           <span className="arr-correct-text">
@@ -168,7 +164,6 @@ function ArrangeSentenceRow({ sentence, onSolved }) {
         )}
       </div>
 
-      {/* chunk pool */}
       {status !== 'correct' && (
         <div className="arr-pool">
           {pool.map(item => (
@@ -182,15 +177,23 @@ function ArrangeSentenceRow({ sentence, onSolved }) {
   );
 }
 
-// One situation card in Arrange mode (all sentences shown)
-function ArrangeSituationCard({ situation }) {
+function ArrangeSituationCard({ situation, user, saveSession }) {
   const sentences = (situation.sentences || []).filter(s => s.text);
   const [solvedCount, setSolvedCount] = useState(0);
+  const startedAt = useRef(Date.now());
+  const sessionSaved = useRef(false);
   const allSolved = solvedCount >= sentences.length && sentences.length > 0;
+
+  useEffect(() => {
+    if (allSolved && !sessionSaved.current) {
+      sessionSaved.current = true;
+      const elapsed = Math.max(1, Math.round((Date.now() - startedAt.current) / 60000));
+      saveSession?.({ lessonId: `arrange-${situation.title}`, studyMinutes: elapsed });
+    }
+  }, [allSolved]); // eslint-disable-line
 
   return (
     <div className={`arr-card${allSolved ? ' arr-card-done' : ''}`}>
-      {/* orange title bar */}
       <div className="arr-card-header">
         <span className="arr-card-title">{situation.title || 'Situation'}</span>
       </div>
@@ -215,7 +218,7 @@ function ArrangeSituationCard({ situation }) {
   );
 }
 
-function ArrangeTab({ situations }) {
+function ArrangeTab({ situations, user, saveSession }) {
   if (situations.length === 0) {
     return (
       <div style={{ padding: '40px 24px', textAlign: 'center', color: 'var(--muted)' }}>
@@ -226,7 +229,7 @@ function ArrangeTab({ situations }) {
   return (
     <div className="arr-list">
       {situations.map((sit, i) => (
-        <ArrangeSituationCard key={i} situation={sit} />
+        <ArrangeSituationCard key={i} situation={sit} user={user} saveSession={saveSession} />
       ))}
     </div>
   );
@@ -234,7 +237,7 @@ function ArrangeTab({ situations }) {
 
 // ── WeekDetail (with tabs) ────────────────────────────────────
 
-function WeekDetail({ sheets, weekDate, onBack }) {
+function WeekDetail({ sheets, weekDate, onBack, user, saveSession }) {
   const sheet = sheets.find(s => s.week_start_date === weekDate);
   const situations = sheet?.situations || [];
   const [tab, setTab] = useState('learn');
@@ -274,7 +277,7 @@ function WeekDetail({ sheets, weekDate, onBack }) {
 
       {tab === 'sort' && (
         <div className="ws-sort-wrapper">
-          <ArrangeTab situations={situations} />
+          <ArrangeTab situations={situations} user={user} saveSession={saveSession} />
         </div>
       )}
     </div>
@@ -303,7 +306,13 @@ export default function WeeklySheets({ user, saveSession, onBack }) {
 
   if (selectedSheet) {
     return (
-      <WeekDetail sheets={sheets} weekDate={selectedSheet} onBack={() => setSelectedSheet(null)} />
+      <WeekDetail
+        sheets={sheets}
+        weekDate={selectedSheet}
+        onBack={() => setSelectedSheet(null)}
+        user={user}
+        saveSession={saveSession}
+      />
     );
   }
 
