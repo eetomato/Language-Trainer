@@ -2,7 +2,7 @@
   "name": "podo-menswear-trainer",
   "version": "1.0.0",
   "private": true,
-  "homepage": "https://eetomato.github.io/menswear-app",
+  "homepage": "https://eetomato.github.io/Language-Trainer",
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
