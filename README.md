@@ -1,4 +1,4 @@
-# n.h Menswear Language Trainer
+# Menswear Language Trainer
 
 Internal MVP for Japanese menswear retail staff.
 
