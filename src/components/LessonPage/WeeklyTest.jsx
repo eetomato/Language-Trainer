@@ -160,7 +160,7 @@ function FinalResult({ test1Results, test2Results, weekDate, user, startedAt, sa
   const t1c = test1Results.filter((r) => r.isCorrect).length;
   const t2c = (test2Results || []).filter((r) => r.isCorrect).length;
 
-  const [saveStatus, setSaveStatus] = useState(null); // null | 'saving' | 'ok' | string(error)
+  const [saveStatus, setSaveStatus] = useState(null); // null | 'saving' | 'ok:...' | '저장エラー:...'
 
   const handleComplete = async () => {
     const elapsedMinutes = Math.max(1, Math.round((Date.now() - startedAt) / 60000));
@@ -181,26 +181,36 @@ function FinalResult({ test1Results, test2Results, weekDate, user, startedAt, sa
     setSaveStatus('saving');
 
     let errorMsg = null;
+    let debugInfo = '';
     try {
       if (supabase && user) {
+        debugInfo = `user="${user.name}"`;
+        console.log('[WeeklyTest] 저장 시작 — user.name:', user.name);
+
         const { data: emp, error: empErr } = await supabase
           .from('employees')
-          .select('id')
+          .select('id, name')
           .eq('name', user.name)
           .single();
 
+        console.log('[WeeklyTest] employee lookup →', { emp, empErr });
+        debugInfo += ` emp=${emp?.id?.slice(0, 8) ?? 'null'} empErr=${empErr?.message ?? 'none'}`;
+
         if (empErr || !emp?.id) {
-          throw new Error(`employee: ${empErr?.message || 'not found'}`);
+          throw new Error(`employee lookup 실패 (name="${user.name}"): ${empErr?.message || 'no row found'}`);
         }
 
+        const insertPayload = {
+          employee_id: emp.id,
+          user_answer: `test1:${t1c}/${test1Results.length}, test2:${t2c}/${(test2Results || []).length}`,
+          is_correct: pct >= 80,
+          time_spent_seconds: elapsedMinutes * 60,
+          attempted_date: new Date().toISOString().slice(0, 10),
+        };
+        console.log('[WeeklyTest] results INSERT payload:', insertPayload);
+
         const [rRes, sRes] = await Promise.all([
-          supabase.from('results').insert({
-            employee_id: emp.id,
-            user_answer: `test1:${t1c}/${test1Results.length}, test2:${t2c}/${(test2Results || []).length}`,
-            is_correct: pct >= 80,
-            time_spent_seconds: elapsedMinutes * 60,
-            attempted_date: new Date().toISOString().slice(0, 10),
-          }),
+          supabase.from('results').insert(insertPayload),
           supabase.from('sessions').insert({
             employee_id: emp.id,
             lesson_id: null,
@@ -208,8 +218,14 @@ function FinalResult({ test1Results, test2Results, weekDate, user, startedAt, sa
           }),
         ]);
 
-        if (rRes.error) throw new Error(`results: ${rRes.error.message}`);
-        if (sRes.error) throw new Error(`sessions: ${sRes.error.message}`);
+        console.log('[WeeklyTest] results INSERT →', { data: rRes.data, error: rRes.error });
+        console.log('[WeeklyTest] sessions INSERT →', { data: sRes.data, error: sRes.error });
+        debugInfo += ` rErr=${rRes.error?.message ?? 'ok'} sErr=${sRes.error?.message ?? 'ok'}`;
+
+        if (rRes.error) throw new Error(`results INSERT: ${rRes.error.message}`);
+        if (sRes.error) throw new Error(`sessions INSERT: ${sRes.error.message}`);
+      } else {
+        debugInfo = `supabase=${!!supabase} user=${!!user}`;
       }
     } catch (e) {
       console.error('[WeeklyTest] Supabase 저장 실패:', e.message, e);
@@ -219,7 +235,7 @@ function FinalResult({ test1Results, test2Results, weekDate, user, startedAt, sa
       if (errorMsg) {
         setSaveStatus(`저장エラー: ${errorMsg}`);
       } else {
-        setSaveStatus('ok');
+        setSaveStatus(`ok:${debugInfo}`);
         onComplete?.();
       }
     }
@@ -255,7 +271,7 @@ function FinalResult({ test1Results, test2Results, weekDate, user, startedAt, sa
           {pct >= 80 ? '🎉 よくできました！Great work!' : '📚 復習して次回また挑戦！'}
         </p>
 
-        {saveStatus && saveStatus !== 'ok' && (
+        {saveStatus && !saveStatus.startsWith('ok') && (
           <div style={{
             margin: '16px 0 0',
             padding: '12px 16px',
