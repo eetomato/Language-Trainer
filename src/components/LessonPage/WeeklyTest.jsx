@@ -160,11 +160,11 @@ function FinalResult({ test1Results, test2Results, weekDate, user, startedAt, sa
   const t1c = test1Results.filter((r) => r.isCorrect).length;
   const t2c = (test2Results || []).filter((r) => r.isCorrect).length;
 
+  const [saveStatus, setSaveStatus] = useState(null); // null | 'saving' | 'ok' | string(error)
+
   const handleComplete = async () => {
-    // 경과 시간 계산 (분 단위, 최소 1분)
     const elapsedMinutes = Math.max(1, Math.round((Date.now() - startedAt) / 60000));
 
-    // localStorage 저장
     const stored = JSON.parse(localStorage.getItem('nh_test_results') || '[]');
     stored.push({
       week: weekDate,
@@ -178,42 +178,59 @@ function FinalResult({ test1Results, test2Results, weekDate, user, startedAt, sa
     });
     localStorage.setItem('nh_test_results', JSON.stringify(stored));
 
-    // Supabase results + sessions 저장
+    setSaveStatus('saving');
+
     if (supabase && user) {
       try {
-        const { data: emp } = await supabase
+        const { data: emp, error: empErr } = await supabase
           .from('employees')
           .select('id')
           .eq('name', user.name)
           .single();
 
-        if (emp?.id) {
-          const [rRes, sRes] = await Promise.all([
-            supabase.from('results').insert({
-              employee_id: emp.id,
-              user_answer: `test1:${t1c}/${test1Results.length}, test2:${t2c}/${(test2Results || []).length}`,
-              is_correct: pct >= 80,
-              time_spent_seconds: elapsedMinutes * 60,
-              attempted_date: new Date().toISOString().slice(0, 10),
-            }),
-            supabase.from('sessions').insert({
-              employee_id: emp.id,
-              lesson_id: null,
-              study_minutes: elapsedMinutes,
-            }),
-          ]);
-          if (rRes.error) console.warn('[WeeklyTest] results INSERT error:', rRes.error.message, rRes.error.details, rRes.error.hint);
-          if (sRes.error) console.warn('[WeeklyTest] sessions INSERT error:', sRes.error.message, sRes.error.details, sRes.error.hint);
-          if (!rRes.error && !sRes.error) console.log('[WeeklyTest] Supabase 저장 성공 ✓');
+        if (empErr || !emp?.id) {
+          setSaveStatus(`employee error: ${empErr?.message || 'not found'}`);
+          saveSession?.({ lessonId: `weekly-test-${weekDate}`, studyMinutes: elapsedMinutes });
+          return;
         }
+
+        const [rRes, sRes] = await Promise.all([
+          supabase.from('results').insert({
+            employee_id: emp.id,
+            user_answer: `test1:${t1c}/${test1Results.length}, test2:${t2c}/${(test2Results || []).length}`,
+            is_correct: pct >= 80,
+            time_spent_seconds: elapsedMinutes * 60,
+            attempted_date: new Date().toISOString().slice(0, 10),
+          }),
+          supabase.from('sessions').insert({
+            employee_id: emp.id,
+            lesson_id: null,
+            study_minutes: elapsedMinutes,
+          }),
+        ]);
+
+        if (rRes.error) {
+          setSaveStatus(`results error: ${rRes.error.message}`);
+          saveSession?.({ lessonId: `weekly-test-${weekDate}`, studyMinutes: elapsedMinutes });
+          return;
+        }
+        if (sRes.error) {
+          setSaveStatus(`sessions error: ${sRes.error.message}`);
+          saveSession?.({ lessonId: `weekly-test-${weekDate}`, studyMinutes: elapsedMinutes });
+          return;
+        }
+
+        setSaveStatus('ok');
       } catch (e) {
-        console.warn('[WeeklyTest] Supabase 저장 실패', e.message);
+        setSaveStatus(`catch: ${e.message}`);
+        saveSession?.({ lessonId: `weekly-test-${weekDate}`, studyMinutes: elapsedMinutes });
+        return;
       }
+    } else {
+      setSaveStatus('ok');
     }
 
-    // localStorage sessions에도 저장
     saveSession?.({ lessonId: `weekly-test-${weekDate}`, studyMinutes: elapsedMinutes });
-
     onComplete?.();
   };
 
@@ -246,14 +263,41 @@ function FinalResult({ test1Results, test2Results, weekDate, user, startedAt, sa
         <p style={{ textAlign: 'center', marginTop: 24, color: 'var(--muted)', fontSize: '0.9rem' }}>
           {pct >= 80 ? '🎉 よくできました！Great work!' : '📚 復習して次回また挑戦！'}
         </p>
-        <button
-          type="button"
-          className="primary-action complete-btn"
-          style={{ marginTop: 24 }}
-          onClick={handleComplete}
-        >
-          <Check size={18} /> 完了
-        </button>
+
+        {saveStatus && saveStatus !== 'ok' && (
+          <div style={{
+            margin: '16px 0 0',
+            padding: '12px 16px',
+            borderRadius: 10,
+            background: saveStatus === 'saving' ? 'var(--paper)' : '#fff0f0',
+            border: `1px solid ${saveStatus === 'saving' ? 'var(--border)' : '#ffaaaa'}`,
+            fontSize: '0.8rem',
+            wordBreak: 'break-all',
+          }}>
+            {saveStatus === 'saving' ? '⏳ 保存中...' : `❌ ${saveStatus}`}
+            {saveStatus !== 'saving' && (
+              <button
+                type="button"
+                style={{ display: 'block', marginTop: 8, fontSize: '0.8rem', color: 'var(--muted)', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                onClick={onComplete}
+              >
+                このまま終了する →
+              </button>
+            )}
+          </div>
+        )}
+
+        {saveStatus !== 'saving' && (
+          <button
+            type="button"
+            className="primary-action complete-btn"
+            style={{ marginTop: 24 }}
+            onClick={handleComplete}
+            disabled={saveStatus === 'saving'}
+          >
+            <Check size={18} /> 完了
+          </button>
+        )}
       </section>
     </div>
   );
