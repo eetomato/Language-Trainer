@@ -188,7 +188,7 @@ function FinalResult({ test1Results, test2Results, weekDate, user, startedAt, sa
           .single();
 
         if (emp?.id) {
-          await Promise.all([
+          const [rRes, sRes] = await Promise.all([
             supabase.from('results').insert({
               employee_id: emp.id,
               user_answer: `test1:${t1c}/${test1Results.length}, test2:${t2c}/${(test2Results || []).length}`,
@@ -202,6 +202,9 @@ function FinalResult({ test1Results, test2Results, weekDate, user, startedAt, sa
               study_minutes: elapsedMinutes,
             }),
           ]);
+          if (rRes.error) console.warn('[WeeklyTest] results INSERT error:', rRes.error.message, rRes.error.details, rRes.error.hint);
+          if (sRes.error) console.warn('[WeeklyTest] sessions INSERT error:', sRes.error.message, sRes.error.details, sRes.error.hint);
+          if (!rRes.error && !sRes.error) console.log('[WeeklyTest] Supabase 저장 성공 ✓');
         }
       } catch (e) {
         console.warn('[WeeklyTest] Supabase 저장 실패', e.message);
