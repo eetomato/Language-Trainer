@@ -201,18 +201,27 @@ export function useDashboard(user) {
   const loadManagerData = useCallback(async () => {
     if (!supabase || user?.role !== 'manager') return;
     try {
-      const [{ data: employees }, { data: mistakes }, { data: stores }] = await Promise.all([
-        supabase
-          .from('employees')
-          .select('id, name, store_name, role, results(is_correct, created_at), sessions(study_minutes, created_at)')
-          .order('name'),
-        supabase
-          .from('mistakes')
-          .select('wrong_word, frequency')
-          .order('frequency', { ascending: false }),
+      const [
+        { data: employees },
+        { data: allResults },
+        { data: allSessions },
+        { data: mistakes },
+        { data: stores },
+      ] = await Promise.all([
+        supabase.from('employees').select('id, name, store_name, role').order('name'),
+        supabase.from('results').select('employee_id, is_correct, created_at'),
+        supabase.from('sessions').select('employee_id, study_minutes, created_at'),
+        supabase.from('mistakes').select('wrong_word, frequency').order('frequency', { ascending: false }),
         supabase.from('stores').select('name').order('name'),
       ]);
-      if (employees) setSupabaseEmployees(employees);
+      if (employees) {
+        const enriched = employees.map((emp) => ({
+          ...emp,
+          results: (allResults || []).filter((r) => r.employee_id === emp.id),
+          sessions: (allSessions || []).filter((s) => s.employee_id === emp.id),
+        }));
+        setSupabaseEmployees(enriched);
+      }
       if (mistakes) setSupabaseMistakes(mistakes);
       if (stores) setSupabaseStores(stores);
     } catch (e) {
