@@ -39,15 +39,20 @@ export function useLesson(user) {
           .eq('name', user.name)
           .maybeSingle();
 
+        if (!employee?.id) {
+          console.warn('[useLesson] employee not found, skipping results INSERT for', user.name);
+          return result;
+        }
+
         // lesson_id: 유효한 UUID인지 확인 후 삽입
         const lessonId = question.lessonId && question.lessonId.match(
           /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
         ) ? question.lessonId : null;
 
         const { error } = await supabase.from('results').insert({
-          employee_id: employee?.id ?? null,
+          employee_id: employee.id,
           lesson_id: lessonId,
-          question_id: null,           // ✅ FK 제약으로 null 처리
+          question_id: null,
           user_answer: userAnswer,
           is_correct: isCorrect,
           time_spent_seconds: 0,
@@ -83,12 +88,17 @@ export function useLesson(user) {
           .eq('name', user.name)
           .maybeSingle();
 
+        if (!employee?.id) {
+          console.warn('[useLesson] employee not found, skipping sessions INSERT for', user.name);
+          return;
+        }
+
         const validLessonId = lessonId?.match(
           /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
         ) ? lessonId : null;
 
         const { error } = await supabase.from('sessions').insert({
-          employee_id: employee?.id ?? null,
+          employee_id: employee.id,
           lesson_id: validLessonId,
           study_minutes: studyMinutes,
         });

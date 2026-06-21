@@ -191,13 +191,16 @@ function FinalResult({ test1Results, test2Results, weekDate, user, startedAt, sa
           .from('employees')
           .select('id, name')
           .eq('name', user.name)
-          .single();
+          .maybeSingle();
 
         console.log('[WeeklyTest] employee lookup →', { emp, empErr });
         debugInfo += ` emp=${emp?.id?.slice(0, 8) ?? 'null'} empErr=${empErr?.message ?? 'none'}`;
 
-        if (empErr || !emp?.id) {
-          throw new Error(`employee lookup 실패 (name="${user.name}"): ${empErr?.message || 'no row found'}`);
+        if (empErr) {
+          throw new Error(`employee lookup エラー (name="${user.name}"): ${empErr.message}`);
+        }
+        if (!emp?.id) {
+          throw new Error(`employee 見つからない (name="${user.name}")`);
         }
 
         const insertPayload = {

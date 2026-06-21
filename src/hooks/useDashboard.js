@@ -33,10 +33,11 @@ function mergeEmployees(supabaseEmps, localEmps) {
   supabaseEmps.forEach((emp) => { merged[emp.name] = { ...emp }; });
   localEmps.forEach((emp) => {
     if (merged[emp.name]) {
+      // Supabase data takes priority — only use localStorage if Supabase has no records
       merged[emp.name] = {
         ...merged[emp.name],
-        results: emp.results,
-        sessions: emp.sessions,
+        results: merged[emp.name].results?.length ? merged[emp.name].results : emp.results,
+        sessions: merged[emp.name].sessions?.length ? merged[emp.name].sessions : emp.sessions,
         store_name: merged[emp.name].store_name || emp.store_name,
       };
     } else {
@@ -158,7 +159,7 @@ export function useDashboard(user) {
       const [{ data: sbResults, error: rErr }, { data: sbSessions, error: sErr }] = await Promise.all([
         supabase
           .from('results')
-          .select('is_correct, expected_answer, attempted_date, created_at')
+          .select('is_correct, user_answer, attempted_date, created_at')
           .eq('employee_id', empId),
         supabase
           .from('sessions')
