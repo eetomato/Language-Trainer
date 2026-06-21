@@ -191,7 +191,6 @@ function FinalResult({ test1Results, test2Results, weekDate, user, startedAt, sa
           await Promise.all([
             supabase.from('results').insert({
               employee_id: emp.id,
-              question_type: 'weekly_test',
               user_answer: `test1:${t1c}/${test1Results.length}, test2:${t2c}/${(test2Results || []).length}`,
               expected_answer: weekDate || '',
               is_correct: pct >= 80,
