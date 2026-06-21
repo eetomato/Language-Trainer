@@ -122,12 +122,12 @@ export default function LessonFlow({
             .select('week_start_date, test1_questions, test2_questions')
             .eq('is_hidden', false)
             .order('week_start_date', { ascending: false })
-            .limit(1)
-            .single();
+            .limit(5);
           if (!error && data) {
-            setTest1Questions(data.test1_questions || []);
-            setTest2Questions(data.test2_questions || []);
-            setTestWeek(data.week_start_date);
+            const sheet = data.find(d => d.test1_questions?.length > 0 || d.test2_questions?.length > 0);
+            setTest1Questions(sheet?.test1_questions || []);
+            setTest2Questions(sheet?.test2_questions || []);
+            setTestWeek(sheet?.week_start_date || null);
           } else {
             setTest1Questions([]);
             setTest2Questions([]);
