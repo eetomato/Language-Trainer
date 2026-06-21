@@ -119,7 +119,7 @@ export function useDashboard(user) {
   const supabaseOk = useRef(false);
   const prevSessionLen = useRef(0);
 
-  // ── localStorage polling (500ms) ─────────────────────────────
+  // ── localStorage polling (500ms) ────────────────────────────
   useEffect(() => {
     const load = () => {
       const { results, sessions } = readLocal();
@@ -135,7 +135,7 @@ export function useDashboard(user) {
     };
   }, []);
 
-  // ── Employee: Supabase first ──────────────────────────────────
+  // ── Employee: Supabase first ────────────────────────────
   const loadEmployeeStats = useCallback(async () => {
     if (!user || user.role === 'manager') return;
 
@@ -197,7 +197,7 @@ export function useDashboard(user) {
     }
   }, [localSessions, user?.name, loadEmployeeStats]);
 
-  // ── Manager: Supabase polling (30s) ──────────────────────────
+  // ── Manager: Supabase polling (30s) ────────────────────────
   const loadManagerData = useCallback(async () => {
     if (!supabase || user?.role !== 'manager') return;
     try {
@@ -209,7 +209,7 @@ export function useDashboard(user) {
         { data: stores },
       ] = await Promise.all([
         supabase.from('employees').select('id, name, store_name, role').order('name'),
-        supabase.from('results').select('employee_id, is_correct, created_at'),
+        supabase.from('results').select('employee_id, is_correct, user_answer, attempted_date, created_at'),
         supabase.from('sessions').select('employee_id, study_minutes, created_at'),
         supabase.from('mistakes').select('wrong_word, frequency').order('frequency', { ascending: false }),
         supabase.from('stores').select('name').order('name'),

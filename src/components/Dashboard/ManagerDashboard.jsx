@@ -16,9 +16,35 @@ export default function ManagerDashboard({ stats, lessons = [], onRefreshLessons
         </div>
       </div>
 
+      {stats.weeklyTestResults?.length > 0 && (
+        <section className="dashboard-band">
+          <div className="section-heading">
+            <p className="eyebrow">Weekly Test</p>
+            <h2>テスト結果（直近21日）</h2>
+          </div>
+          <div className="ranking-list">
+            {stats.weeklyTestResults.map((r) => (
+              <p key={r.name}>
+                <span>{r.name}</span>
+                {r.completed ? (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <strong style={{ color: r.isPassed ? 'var(--success)' : 'var(--warning)' }}>
+                      {r.userAnswer}
+                    </strong>
+                    <small style={{ color: 'var(--muted)' }}>{r.date}</small>
+                  </span>
+                ) : (
+                  <span style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>未受験</span>
+                )}
+              </p>
+            ))}
+          </div>
+        </section>
+      )}
+
       <ViewReports stats={stats} />
       <ManageEmployees employees={stats.rankings} />
-      {/* AddLesson 일시 숨김 */}
+      {/* AddLesson 一時隠し */}
       {/* <AddLesson lessons={lessons} onRefresh={onRefreshLessons} /> */}
 
       {supabase ? (

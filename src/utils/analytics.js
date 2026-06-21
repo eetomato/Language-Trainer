@@ -70,7 +70,6 @@ export function calculateManagerStats({ employees = [], mistakes = [], stores = 
       const total = res.length;
       const correct = res.filter((r) => r.is_correct).length;
 
-      // ✅ sessions에서 study time 합산
       const empSessions = emp.sessions || [];
       const studyMinutes = empSessions.reduce((sum, s) => sum + (s.study_minutes || 0), 0);
 
@@ -99,6 +98,43 @@ export function calculateManagerStats({ employees = [], mistakes = [], stores = 
     .slice(0, 6)
     .map((m) => ({ word: m.wrong_word, count: m.frequency }));
 
+  // Weekly test results: most recent test per employee within last 21 days
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 21);
+  const cutoffStr = cutoff.toISOString().slice(0, 10);
+
+  const empLatestTest = {};
+  employees
+    .filter((e) => e.role !== 'manager')
+    .forEach((emp) => {
+      const testRows = (emp.results || [])
+        .filter((r) => r.user_answer?.startsWith('test1:'))
+        .filter((r) => (r.attempted_date || r.created_at || '').slice(0, 10) >= cutoffStr)
+        .sort((a, b) => {
+          const da = (a.attempted_date || a.created_at || '').slice(0, 10);
+          const db = (b.attempted_date || b.created_at || '').slice(0, 10);
+          return db.localeCompare(da);
+        });
+      if (testRows.length > 0) empLatestTest[emp.name] = testRows[0];
+    });
+
+  const weeklyTestResults = employees
+    .filter((e) => e.role !== 'manager')
+    .map((emp) => {
+      const r = empLatestTest[emp.name];
+      return {
+        name: emp.name,
+        completed: !!r,
+        userAnswer: r?.user_answer || '',
+        isPassed: r?.is_correct || false,
+        date: r ? (r.attempted_date || r.created_at || '').slice(0, 10) : null,
+      };
+    })
+    .sort((a, b) => {
+      if (a.completed !== b.completed) return b.completed - a.completed;
+      return a.name.localeCompare(b.name);
+    });
+
   return {
     stores: Object.values(storeMap)
       .filter((s) => s.count > 0)
@@ -106,5 +142,6 @@ export function calculateManagerStats({ employees = [], mistakes = [], stores = 
     rankings: [...staffList].sort((a, b) => b.score - a.score).slice(0, 8),
     weakVocabulary,
     studyTime: [...staffList].sort((a, b) => b.studyMinutes - a.studyMinutes).slice(0, 6),
+    weeklyTestResults,
   };
 }
