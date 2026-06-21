@@ -180,8 +180,9 @@ function FinalResult({ test1Results, test2Results, weekDate, user, startedAt, sa
 
     setSaveStatus('saving');
 
-    if (supabase && user) {
-      try {
+    let errorMsg = null;
+    try {
+      if (supabase && user) {
         const { data: emp, error: empErr } = await supabase
           .from('employees')
           .select('id')
@@ -189,9 +190,7 @@ function FinalResult({ test1Results, test2Results, weekDate, user, startedAt, sa
           .single();
 
         if (empErr || !emp?.id) {
-          setSaveStatus(`employee error: ${empErr?.message || 'not found'}`);
-          saveSession?.({ lessonId: `weekly-test-${weekDate}`, studyMinutes: elapsedMinutes });
-          return;
+          throw new Error(`employee: ${empErr?.message || 'not found'}`);
         }
 
         const [rRes, sRes] = await Promise.all([
@@ -209,29 +208,21 @@ function FinalResult({ test1Results, test2Results, weekDate, user, startedAt, sa
           }),
         ]);
 
-        if (rRes.error) {
-          setSaveStatus(`results error: ${rRes.error.message}`);
-          saveSession?.({ lessonId: `weekly-test-${weekDate}`, studyMinutes: elapsedMinutes });
-          return;
-        }
-        if (sRes.error) {
-          setSaveStatus(`sessions error: ${sRes.error.message}`);
-          saveSession?.({ lessonId: `weekly-test-${weekDate}`, studyMinutes: elapsedMinutes });
-          return;
-        }
-
-        setSaveStatus('ok');
-      } catch (e) {
-        setSaveStatus(`catch: ${e.message}`);
-        saveSession?.({ lessonId: `weekly-test-${weekDate}`, studyMinutes: elapsedMinutes });
-        return;
+        if (rRes.error) throw new Error(`results: ${rRes.error.message}`);
+        if (sRes.error) throw new Error(`sessions: ${sRes.error.message}`);
       }
-    } else {
-      setSaveStatus('ok');
+    } catch (e) {
+      console.error('[WeeklyTest] Supabase 저장 실패:', e.message, e);
+      errorMsg = e.message;
+    } finally {
+      saveSession?.({ lessonId: `weekly-test-${weekDate}`, studyMinutes: elapsedMinutes });
+      if (errorMsg) {
+        setSaveStatus(`저장エラー: ${errorMsg}`);
+      } else {
+        setSaveStatus('ok');
+        onComplete?.();
+      }
     }
-
-    saveSession?.({ lessonId: `weekly-test-${weekDate}`, studyMinutes: elapsedMinutes });
-    onComplete?.();
   };
 
   return (
