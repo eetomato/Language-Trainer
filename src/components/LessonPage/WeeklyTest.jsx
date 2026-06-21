@@ -192,8 +192,8 @@ function FinalResult({ test1Results, test2Results, weekDate, user, startedAt, sa
             supabase.from('results').insert({
               employee_id: emp.id,
               user_answer: `test1:${t1c}/${test1Results.length}, test2:${t2c}/${(test2Results || []).length}`,
-              expected_answer: weekDate || '',
               is_correct: pct >= 80,
+              time_spent_seconds: elapsedMinutes * 60,
               attempted_date: new Date().toISOString().slice(0, 10),
             }),
             supabase.from('sessions').insert({
