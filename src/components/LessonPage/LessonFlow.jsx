@@ -117,12 +117,14 @@ export default function LessonFlow({
           setTest2Questions(null);
           setMode('test');
           if (!supabase) { setTest1Questions([]); setTest2Questions([]); return; }
+          const today = new Date().toISOString().slice(0, 10);
           const { data, error } = await supabase
             .from('weekly_sheets')
             .select('week_start_date, test1_questions, test2_questions')
             .eq('is_hidden', false)
+            .lte('week_start_date', today)
             .order('week_start_date', { ascending: false })
-            .limit(5);
+            .limit(10);
           if (!error && data) {
             const sheet = data.find(d => d.test1_questions?.length > 0 || d.test2_questions?.length > 0);
             setTest1Questions(sheet?.test1_questions || []);
