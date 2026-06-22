@@ -105,7 +105,6 @@ export function calculateManagerStats({ employees = [], mistakes = [], stores = 
 
   const empLatestTest = {};
   employees
-    .filter((e) => e.role !== 'manager')
     .forEach((emp) => {
       const testRows = (emp.results || [])
         .filter((r) => r.user_answer?.startsWith('test1:'))
@@ -119,7 +118,6 @@ export function calculateManagerStats({ employees = [], mistakes = [], stores = 
     });
 
   const weeklyTestResults = employees
-    .filter((e) => e.role !== 'manager')
     .map((emp) => {
       const r = empLatestTest[emp.name];
       return {

@@ -239,7 +239,7 @@ function FinalResult({ test1Results, test2Results, weekDate, user, startedAt, sa
         setSaveStatus(`저장エラー: ${errorMsg}`);
       } else {
         setSaveStatus(`ok:${debugInfo}`);
-        onComplete?.();
+        // Don't auto-navigate — show success box so user can verify before going home
       }
     }
   };
@@ -274,6 +274,7 @@ function FinalResult({ test1Results, test2Results, weekDate, user, startedAt, sa
           {pct >= 80 ? '🎉 よくできました！Great work!' : '📚 復習して次回また挑戦！'}
         </p>
 
+        {/* 保存中 / エラー */}
         {saveStatus && !saveStatus.startsWith('ok') && (
           <div style={{
             margin: '16px 0 0',
@@ -297,13 +298,39 @@ function FinalResult({ test1Results, test2Results, weekDate, user, startedAt, sa
           </div>
         )}
 
-        {saveStatus !== 'saving' && (
+        {/* 保存成功 */}
+        {saveStatus?.startsWith('ok') && (
+          <div style={{
+            margin: '16px 0 0',
+            padding: '12px 16px',
+            borderRadius: 10,
+            background: '#f0fff4',
+            border: '1px solid #9ae6b4',
+            fontSize: '0.8rem',
+            wordBreak: 'break-all',
+          }}>
+            ✅ 保存完了
+            <p style={{ color: 'var(--muted)', marginTop: 4, fontSize: '0.75rem' }}>
+              {saveStatus.slice(3)}
+            </p>
+            <button
+              type="button"
+              className="primary-action complete-btn"
+              style={{ marginTop: 12, width: '100%' }}
+              onClick={onComplete}
+            >
+              <Check size={16} /> ホームへ
+            </button>
+          </div>
+        )}
+
+        {/* 完了ボタン: 保存前のみ表示 */}
+        {!saveStatus && (
           <button
             type="button"
             className="primary-action complete-btn"
             style={{ marginTop: 24 }}
             onClick={handleComplete}
-            disabled={saveStatus === 'saving'}
           >
             <Check size={18} /> 完了
           </button>
