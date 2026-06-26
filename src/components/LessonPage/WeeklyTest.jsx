@@ -183,7 +183,7 @@ function FinalResult({ test1Results, test2Results, weekDate, user, startedAt, sa
     let errorMsg = null;
     let debugInfo = '';
     try {
-      if (supabase && user) {
+      if (supabase && user && user.role !== 'manager') {
         debugInfo = `user="${user.name}"`;
         console.log('[WeeklyTest] 저장 시작 — user.name:', user.name);
 
@@ -227,6 +227,8 @@ function FinalResult({ test1Results, test2Results, weekDate, user, startedAt, sa
 
         if (rRes.error) throw new Error(`results INSERT: ${rRes.error.message}`);
         if (sRes.error) throw new Error(`sessions INSERT: ${sRes.error.message}`);
+      } else if (user?.role === 'manager') {
+        debugInfo = `manager="${user.name}" (저장 생략)`;
       } else {
         debugInfo = `supabase=${!!supabase} user=${!!user}`;
       }
