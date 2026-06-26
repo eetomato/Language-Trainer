@@ -2,9 +2,9 @@ import { createClient } from '@supabase/supabase-js';
 const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY);
 
 const test1 = [
-  { sentence: "Shall I put it in your ___?", answer: "bag", hint: "蝢" },
-  { sentence: "Would you like to combine your ___?", answer: "bags", hint: "蝢" },
-  { sentence: "Let me put it all in one ___ for you.", answer: "bag", hint: "蝢" },
+  { sentence: "Shall I put it in your ___?", answer: "bag", hint: "袋" },
+  { sentence: "Would you like to combine your ___?", answer: "bags", hint: "袋" },
+  { sentence: "Let me put it all in one ___ for you.", answer: "bag", hint: "袋" },
   { sentence: "Please keep your ___ on.", answer: "underwear", hint: "下着" },
   { sentence: "Please wear it over your ___.", answer: "underwear", hint: "下着" },
   { sentence: "Thank you for your ___.", answer: "understanding", hint: "ご理解" },
@@ -14,7 +14,7 @@ const test1 = [
 ];
 
 const test2 = [
-  { sentence: "Shall I ___ your bag?", answer: "put it in", hint: "蝢に入れる" },
+  { sentence: "Shall I ___ your bag?", answer: "put it in", hint: "袋に入れる" },
   { sentence: "Would you like to ___ your bags?", answer: "combine", hint: "まとめる" },
   { sentence: "Let me ___ in one bag for you.", answer: "put it all", hint: "全部入れる" },
   { sentence: "Please ___ your underwear on.", answer: "keep", hint: "つけたままにする" },
