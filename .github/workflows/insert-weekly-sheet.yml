@@ -1,0 +1,39 @@
+name: Insert Weekly Sheet
+
+on:
+  workflow_dispatch:
+    inputs:
+      week_start_date:
+        description: '週開始日 (例: 2026-06-29)'
+        required: true
+        type: string
+      title:
+        description: 'タイトル (例: 6/29~)'
+        required: true
+        type: string
+      situations_json:
+        description: 'situations JSON文字列'
+        required: true
+        type: string
+
+jobs:
+  insert:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install @supabase/supabase-js
+
+      - name: Insert weekly sheet
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          WEEK_START_DATE: ${{ inputs.week_start_date }}
+          TITLE: ${{ inputs.title }}
+          SITUATIONS_JSON: ${{ inputs.situations_json }}
+        run: node scripts/insert-weekly-sheet.mjs
