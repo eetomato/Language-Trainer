@@ -26,7 +26,7 @@ function weekLabel(dateStr) {
   return `${d.getMonth() + 1}/${d.getDate()}〜`;
 }
 
-// ── Study tab ─────────────────────────────────────────────────
+// ── Study tab ─────────────────────────────────────────────────────
 
 function ChunkWord({ text, meaning }) {
   const [open, setOpen] = useState(false);
@@ -40,7 +40,13 @@ function ChunkWord({ text, meaning }) {
 }
 
 function SentenceRow({ sentence }) {
-  const { text, translation, chunk, chunk_meaning, pattern } = sentence;
+  const { text, translation, pattern } = sentence;
+  // chunks 배열 / chunk_meanings 객체에서 단수 필드로 자동 변환 (6/22, 6/29 데이터 대응)
+  const chunk = sentence.chunk || sentence.chunks?.[0] || '';
+  const chunk_meaning = sentence.chunk_meaning
+    || sentence.chunk_meanings?.[chunk]
+    || (sentence.chunk_meanings ? Object.values(sentence.chunk_meanings)[0] : '')
+    || '';
   let textContent;
   if (chunk && text && text.includes(chunk)) {
     const parts = text.split(chunk);
@@ -89,7 +95,7 @@ function SituationCard({ situation }) {
   );
 }
 
-// ── Arrange tab ───────────────────────────────────────────────
+// ── Arrange tab ─────────────────────────────────────────────────
 
 function shuffle(arr) {
   const a = [...arr];
