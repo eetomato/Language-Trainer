@@ -126,7 +126,8 @@ export default function LessonFlow({
             .order('week_start_date', { ascending: false })
             .limit(10);
           if (!error && data) {
-            const sheet = data.find(d => d.test1_questions?.length > 0 || d.test2_questions?.length > 0);
+            // 날짜 기준 가장 최근 주차를 선택 (test1_questions 유무 무관)
+            const sheet = data[0] || null;
             setTest1Questions(sheet?.test1_questions || []);
             setTest2Questions(sheet?.test2_questions || []);
             setTestWeek(sheet?.week_start_date || null);

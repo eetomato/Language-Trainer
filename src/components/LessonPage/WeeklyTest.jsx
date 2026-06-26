@@ -372,8 +372,10 @@ export default function WeeklyTest({ user, weekDate, test1Questions, test2Questi
         </section>
         <div style={{ padding: '40px 24px', textAlign: 'center', color: 'var(--muted)' }}>
           <p style={{ fontSize: '1.5rem', marginBottom: 8 }}>📝</p>
-          <p style={{ fontWeight: 600, marginBottom: 4 }}>準備中です</p>
-          <p style={{ fontSize: '0.9rem' }}>Coming soon — check back later!</p>
+          <p style={{ fontWeight: 600, marginBottom: 4 }}>
+            {weekDate ? `${weekLabel(weekDate)}週のテスト問題がありません` : '準備中です'}
+          </p>
+          <p style={{ fontSize: '0.9rem' }}>今週のテスト問題は準備中です。もう少しお待ちください。</p>
         </div>
       </div>
     );
