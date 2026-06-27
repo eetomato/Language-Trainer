@@ -34,8 +34,15 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ── SHEET_TEXT パーサー ────────────────────────────────────────
 function parseSheetText(text) {
+  // GitHub Actions では改行なし1行で渡される場合があるため前処理
+  const normalized = text
+    .replace(/ ## /g, '\n## ')
+    .replace(/ Pattern:/g, '\nPattern:')
+    .replace(/ EN:/g, '\nEN:')
+    .replace(/ JP:/g, '\nJP:');
+
   const situations = [];
-  const lines = text.split(/\r?\n/);
+  const lines = normalized.split(/\r?\n/);
   let current = null;
 
   for (const rawLine of lines) {
